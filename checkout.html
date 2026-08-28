@@ -56,6 +56,10 @@
       line-height: 1.4;
     }
   </style>
+
+  <!-- Firebase SDKs Included -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -181,12 +185,26 @@
 
   <script src="app.js"></script>
   <script>
-    // Formspree Endpoint URL
+    // Firebase Setup
+    const firebaseConfig = {
+      apiKey: "AIzaSyA4as297Sk35tTVqSQyOUztD5Vg9sV0Oy8",
+      authDomain: "fenex-ba1af.firebaseapp.com",
+      projectId: "fenex-ba1af",
+      storageBucket: "fenex-ba1af.firebasestorage.app",
+      messagingSenderId: "506989870286",
+      appId: "1:506989870286:web:75b50258542b88b443e49f"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
     const FORMSPREE_URL = "https://formspree.io/f/xppabdyz";
 
     let currentSubtotal = 0;
     let appliedDiscount = 0;
-    const deliveryCharge = 0; // Delivery is now free
+    const deliveryCharge = 0;
 
     function getCheckoutCart() {
       let cartData = localStorage.getItem('FENEX_CART') || localStorage.getItem('cart');
@@ -196,7 +214,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       renderCheckoutSummary();
       
-      // Auto-apply coupon if previously saved in app.js cart drawer
       const savedCoupon = JSON.parse(localStorage.getItem('FENEX_APPLIED_COUPON'));
       if (savedCoupon && savedCoupon.code === 'FENEX10') {
           document.getElementById('couponInput').value = 'FENEX10';
@@ -266,7 +283,6 @@
         msgEl.style.color = '#2e7d32';
         msgEl.innerText = '🎉 অভিনন্দন! FENEX10 কুপনটি যুক্ত হয়েছে।';
         document.getElementById('discountRow').style.display = 'flex';
-        // Save coupon state
         localStorage.setItem('FENEX_APPLIED_COUPON', JSON.stringify({code: 'FENEX10', percentage: 10}));
       } else {
         appliedDiscount = 0;
@@ -295,7 +311,7 @@
       
       const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
       let paymentDetailsStr = paymentMethod;
-      let trxId = "";
+      let trxId = "N/A";
       let senderNo = "";
 
       if (paymentMethod === 'bKash') {
@@ -336,11 +352,10 @@
         image: item.image || item.img || 'https://via.placeholder.com/150'
       }));
 
-      const orderId = "FNX-" + Math.floor(1000 + Math.random() * 9000);
+      const generatedOrderId = "FNX-" + Math.floor(100000 + Math.random() * 900000);
 
       const newOrder = {
-        id: orderId,
-        orderId: orderId,
+        orderId: generatedOrderId,
         date: new Date().toLocaleDateString('en-GB'),
         name: name,
         phone: phone,
@@ -356,25 +371,36 @@
         totalPrice: grandTotal,
         totalAmount: grandTotal,
         paymentMethod: paymentDetailsStr,
-        status: "Pending"
+        trxId: trxId,
+        status: "Pending",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
-      // 1. Save order to LocalStorage
-      let existingOrders = JSON.parse(localStorage.getItem('FENEX_ORDERS')) || JSON.parse(localStorage.getItem('orders')) || [];
-      existingOrders.unshift(newOrder);
-      localStorage.setItem('FENEX_ORDERS', JSON.stringify(existingOrders));
-      localStorage.setItem('orders', JSON.stringify(existingOrders));
+      try {
+        // ১. Firebase Firestore-এ ডেটা সেভ
+        await db.collection("orders").add(newOrder);
 
-      // 2. Clear Cart & Coupon
-      localStorage.removeItem('FENEX_CART');
-      localStorage.removeItem('cart');
-      localStorage.removeItem('FENEX_APPLIED_COUPON');
+        // ২. LocalStorage-এ সেভ
+        let existingOrders = JSON.parse(localStorage.getItem('FENEX_ORDERS')) || JSON.parse(localStorage.getItem('orders')) || [];
+        existingOrders.unshift(newOrder);
+        localStorage.setItem('FENEX_ORDERS', JSON.stringify(existingOrders));
+        localStorage.setItem('orders', JSON.stringify(existingOrders));
 
-      // 3. Show Customer Receipt on Website
-      showCustomerReceipt(newOrder);
+        // ৩. কার্ট ক্লিয়ার করা
+        localStorage.removeItem('FENEX_CART');
+        localStorage.removeItem('cart');
+        localStorage.removeItem('FENEX_APPLIED_COUPON');
 
-      // 4. Send Silent Background Notification via Formspree
-      sendAdminNotification(newOrder);
+        // ৪. মোট নোটিফিকেশন পাঠানো ও রিসিপ্ট দেখানো
+        showCustomerReceipt(newOrder);
+        sendAdminNotification(newOrder);
+
+      } catch (error) {
+        console.error("Error saving order: ", error);
+        alert("অর্ডার সেভ করতে সমস্যা হয়েছে! " + error.message);
+        btn.innerText = "ORDER CONFIRM করুন";
+        btn.disabled = false;
+      }
     }
 
     function showCustomerReceipt(order) {
@@ -391,7 +417,7 @@
       let discountHtml = order.discount > 0 ? `<p><strong>ডিসকাউন্ট:</strong> -৳${order.discount.toFixed(0)}</p>` : '';
 
       document.getElementById('customerReceipt').innerHTML = `
-        <p><strong>Order ID:</strong> #${order.id}</p>
+        <p><strong>Order ID:</strong> #${order.orderId}</p>
         <p><strong>নাম:</strong> ${order.name}</p>
         <p><strong>ফোন:</strong> ${order.phone}</p>
         <p><strong>ঠিকানা:</strong> ${order.address}</p>
@@ -412,7 +438,7 @@
       let itemDetails = order.items.map(i => `${i.title} (Qty:${i.qty}, Size:${i.size})`).join(', ');
 
       const orderData = {
-        "Order ID": "#" + order.id,
+        "Order ID": "#" + order.orderId,
         "Customer Name": order.name,
         "Phone Number": order.phone,
         "Delivery Address": order.address,
