@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop Collection | FENEX</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color, #f9f9f9);
+      color: var(--text-color, #111);
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 5%;
+    }
+    
+    /* Navigation Bar */
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 16px;
+      background: var(--bg-color, #ffffff);
+      color: var(--text-color, #111);
+      border: 1px solid var(--border-color, #ccc);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    /* Filter Section */
+    .filter-wrapper {
+      margin-bottom: 25px;
+    }
+
+    .filter-label {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #666;
+      text-transform: uppercase;
+      margin: 12px 0 6px;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+    }
+
+    .filter-btn {
+      padding: 6px 14px;
+      background: #eee;
+      border: 1px solid #ddd;
+      border-radius: 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      text-decoration: none;
+      color: #333;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.all-btn, 
+    .filter-btn:hover {
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
+
+    /* Product Grid */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    .product-card {
+      background: var(--bg-color, #fff);
+      border-radius: 8px;
+      border: 1px solid var(--border-color, #eee);
+      padding: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .product-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .product-img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 6px;
+      background: #f0f0f0;
+    }
+
+    .product-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin: 10px 0 4px;
+      color: var(--text-color, #222);
+    }
+
+    .product-price {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text-color, #000);
+      margin-bottom: 10px;
+    }
+
+    .view-btn {
+      width: 100%;
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 9px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.75rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* --- PRODUCT DETAILS MODAL --- */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      padding: 15px;
+    }
+
+    .modal-content {
+      background: #fff;
+      border-radius: 12px;
+      max-width: 450px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 20px;
+      position: relative;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      color: #111;
+    }
+
+    .close-modal {
+      position: absolute;
+      top: 12px;
+      right: 15px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #666;
+      cursor: pointer;
+    }
+
+    .modal-img {
+      width: 100%;
+      height: 230px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .modal-price {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #d90429;
+      margin-bottom: 12px;
+    }
+
+    .stock-tag {
+      display: inline-block;
+      background: #e8f5e9;
+      color: #2e7d32;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
+    .section-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin: 12px 0 6px;
+      text-transform: uppercase;
+      color: #444;
+    }
+
+    .size-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .size-btn {
+      padding: 6px 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: #111;
+    }
+
+    .size-btn.active {
+      background: #000;
+      color: #fff;
+      border-color: #000;
+    }
+
+    .modal-description {
+      font-size: 0.82rem;
+      color: #555;
+      line-height: 1.4;
+      margin-top: 6px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .cart-btn-popup {
+      flex: 1;
+      background: #fff;
+      color: #000;
+      border: 2px solid #000;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .buy-btn-popup {
+      flex: 1;
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .no-products {
+      text-align: center;
+      padding: 50px 10px;
+      grid-column: 1 / -1;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-left">
+      <i class="fa-solid fa-bars menu-btn" id="menuBtn"></i>
+      <a href="index.html" class="logo">FENEX</a>
+    </div>
+
+    <nav class="nav-links">
+      <a href="index.html">HOME</a>
+      <a href="shop.html">PRODUCTS</a>
+      <a href="#contact">CONTACT</a>
+    </nav>
+
+    <div class="nav-icons">
+      <i class="fa-solid fa-moon" id="themeToggleBtn"></i>
+      <a href="login.html" class="icon-link" id="userIcon"><i class="fa-regular fa-user"></i></a>
+      <a href="#" class="icon-link"><i class="fa-regular fa-heart"></i><span class="badge" id="wishlistCount">0</span></a>
+      <div class="cart-icon-wrap" id="cartBtn" onclick="openCartDrawer()" style="cursor: pointer;">
+        <i class="fa-solid fa-bag-shopping"></i>
+        <span class="badge" id="cartCount">0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Side Menu Overlay & Drawer -->
+  <div class="menu-overlay" id="menuOverlay"></div>
+  <div class="mobile-menu" id="mobileMenu">
+    <div class="menu-header" style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>MENU</h3>
+      <i class="fa-solid fa-xmark" id="closeMenuBtn" style="font-size:20px; cursor:pointer;"></i>
+    </div>
+    <ul class="mobile-links" style="list-style:none; padding: 20px 0;">
+      <li style="margin-bottom:15px;"><a href="index.html" style="text-decoration:none; color:var(--text-color); font-weight:bold;">HOME</a></li>
+      <li style="margin-bottom:15px;"><a href="shop.html" style="text-decoration:none; color:var(--text-color); font-weight:bold;">PRODUCTS</a></li>
+      <li style="margin-bottom:15px;"><a href="login.html" style="text-decoration:none; color:var(--text-color); font-weight:bold;">LOGIN / REGISTER</a></li>
+    </ul>
+  </div>
+
+  <div class="container">
+    <div class="nav-buttons">
+      <button onclick="history.back()" class="nav-btn">&#8592; Back</button>
+      <a href="index.html" class="nav-btn">&#8962; Home</a>
+    </div>
+
+    <h2 id="category-heading" class="page-title">ALL PRODUCTS</h2>
+
+    <div class="filter-wrapper">
+      <div class="filter-bar">
+        <a href="shop.html" class="filter-btn">All Products</a>
+        <a href="shop.html?gender=men" class="filter-btn all-btn">All Men's Products</a>
+        <a href="shop.html?gender=women" class="filter-btn all-btn">All Women's Products</a>
+      </div>
+
+      <div class="filter-label">Men Collection</div>
+      <div class="filter-bar">
+        <a href="shop.html?gender=men&category=Shirt" class="filter-btn">Shirt</a>
+        <a href="shop.html?gender=men&category=T-Shirt" class="filter-btn">T-Shirt</a>
+        <a href="shop.html?gender=men&category=Pant" class="filter-btn">Pant</a>
+        <a href="shop.html?gender=men&category=Shoes" class="filter-btn">Shoes</a>
+        <a href="shop.html?gender=men&category=Watch" class="filter-btn">Watch</a>
+        <a href="shop.html?gender=men&category=Sunglass" class="filter-btn">Sunglass</a>
+        <a href="shop.html?gender=men&category=Men-Bundle" class="filter-btn">Choice Bundle 🔥</a>
+      </div>
+
+      <div class="filter-label">Women Collection</div>
+      <div class="filter-bar">
+        <a href="shop.html?gender=women&category=Tops" class="filter-btn">Tops & Dress</a>
+        <a href="shop.html?gender=women&category=Bags" class="filter-btn">Bags</a>
+        <a href="shop.html?gender=women&category=Shoes" class="filter-btn">Shoes</a>
+        <a href="shop.html?gender=women&category=Jewelry" class="filter-btn">Jewelry</a>
+        <a href="shop.html?gender=women&category=Sunglass" class="filter-btn">Sunglass</a>
+        <a href="shop.html?gender=women&category=Women-Bundle" class="filter-btn">Choice Bundle 🔥</a>
+      </div>
+    </div>
+
+    <div id="product-list" class="product-grid"></div>
+  </div>
+
+  <!-- PRODUCT MODAL -->
+  <div id="product-modal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeModal()">&times;</span>
+      <img id="m-img" src="" class="modal-img" alt="Product Image">
+      <div class="stock-tag">In Stock</div>
+      <h3 id="m-title" class="modal-title"></h3>
+      <p id="m-price" class="modal-price"></p>
+      
+      <div id="size-section">
+        <div class="section-label">Select Size:</div>
+        <div class="size-options" id="m-sizes"></div>
+      </div>
+
+      <div id="color-section">
+        <div class="section-label">Select Color:</div>
+        <div class="size-options" id="m-colors"></div>
+      </div>
+
+      <div class="section-label">Product Details:</div>
+      <p id="m-desc" class="modal-description"></p>
+
+      <div class="modal-actions">
+        <button class="cart-btn-popup" onclick="handleModalAddToCart()">Add to Cart</button>
+        <button class="buy-btn-popup" onclick="handleModalBuyNow()">Buy Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GLOBAL CART DRAWER -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <div class="cart-drawer" id="cartDrawer">
+    <div class="cart-header">
+      <h3>YOUR SHOPPING BAG</h3>
+      <i class="fa-solid fa-xmark close-cart" id="closeCartBtn" style="cursor:pointer; font-size:20px;"></i>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-footer">
+      <div class="cart-total">
+        <span>Subtotal:</span>
+        <span id="cartSubtotal">৳0</span>
+      </div>
+      <button class="btn-block" onclick="alert('অর্ডার প্রসেস করার জন্য ধন্যবাদ!')">CHECKOUT</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let currentProduct = null;
+    let selectedSize = '';
+    let selectedColor = '';
+
+    // ফিল্টার ক্লিনিং ফাংশন (হাইফেন ও স্পেস হ্যান্ডেল করার জন্য)
+    function cleanStr(str) {
+      return str ? String(str).toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const selectedGender = urlParams.get('gender');
+      const selectedCategory = urlParams.get('category');
+
+      const productContainer = document.getElementById('product-list');
+      const categoryHeading = document.getElementById('category-heading');
+
+      // app.js থেকে মাস্টার প্রোডাক্ট লিস্ট লোড
+      const allProductsList = typeof getAllProducts === 'function' ? getAllProducts() : (typeof products !== 'undefined' ? products : []);
+
+      let filteredList = allProductsList;
+
+      if (selectedGender && selectedCategory) {
+        categoryHeading.innerText = `${selectedGender.toUpperCase()} ${selectedCategory.replace('-', ' ').toUpperCase()} COLLECTION`;
+        filteredList = filteredList.filter(p => cleanStr(p.gender) === cleanStr(selectedGender) && cleanStr(p.category) === cleanStr(selectedCategory));
+      } else if (selectedGender) {
+        categoryHeading.innerText = `ALL ${selectedGender.toUpperCase()} COLLECTION`;
+        filteredList = filteredList.filter(p => cleanStr(p.gender) === cleanStr(selectedGender));
+      } else if (selectedCategory) {
+        categoryHeading.innerText = `${selectedCategory.replace('-', ' ').toUpperCase()} COLLECTION`;
+        filteredList = filteredList.filter(p => cleanStr(p.category) === cleanStr(selectedCategory));
+      } else {
+        categoryHeading.innerText = "ALL PRODUCTS";
+      }
+
+      if (!productContainer) return;
+
+      if (filteredList.length === 0) {
+        productContainer.innerHTML = `<div class="no-products"><h3>No products found!</h3></div>`;
+      } else {
+        productContainer.innerHTML = filteredList.map(item => `
+          <div class="product-card" onclick="openModal('${item.id}')">
+            <img src="${item.image}" alt="${item.name || item.title}" class="product-img" onerror="this.src='https://via.placeholder.com/300x350?text=No+Image'">
+            <div>
+              <h3 class="product-name">${item.name || item.title}</h3>
+              <p class="product-price">৳${item.price}</p>
+            </div>
+            <button class="view-btn">View Details</button>
+          </div>
+        `).join('');
+      }
+    });
+
+    function openModal(id) {
+      const allProductsList = typeof getAllProducts === 'function' ? getAllProducts() : (typeof products !== 'undefined' ? products : []);
+      currentProduct = allProductsList.find(p => String(p.id) === String(id));
+      if (!currentProduct) return;
+
+      const sizes = currentProduct.sizes || ["M", "L", "XL"];
+      const colors = currentProduct.colors || ["Standard"];
+
+      selectedSize = sizes[0] || '';
+      selectedColor = colors[0] || '';
+
+      document.getElementById('m-img').src = currentProduct.image;
+      document.getElementById('m-title').innerText = currentProduct.name || currentProduct.title;
+      document.getElementById('m-price').innerText = `৳${currentProduct.price}`;
+      document.getElementById('m-desc').innerText = currentProduct.desc || 'Premium quality luxury streetwear designed for ultimate comfort and high-end aesthetics.';
+
+      const sizeContainer = document.getElementById('m-sizes');
+      sizeContainer.innerHTML = sizes.map((s, idx) => `
+        <button class="size-btn ${idx === 0 ? 'active' : ''}" onclick="selectSize(this, '${s}')">${s}</button>
+      `).join('');
+
+      const colorContainer = document.getElementById('m-colors');
+      colorContainer.innerHTML = colors.map((c, idx) => `
+        <button class="size-btn ${idx === 0 ? 'active' : ''}" onclick="selectColor(this, '${c}')">${c}</button>
+      `).join('');
+
+      document.getElementById('product-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('product-modal').style.display = 'none';
+    }
+
+    function selectSize(btn, size) {
+      document.querySelectorAll('#m-sizes .size-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedSize = size;
+    }
+
+    function selectColor(btn, color) {
+      document.querySelectorAll('#m-colors .size-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedColor = color;
+    }
+
+    function handleModalAddToCart() {
+      if (!currentProduct) return;
+      
+      let cart = getCart();
+      const existingItem = cart.find(item => String(item.id) === String(currentProduct.id) && item.size === selectedSize && item.color === selectedColor);
+
+      if (existingItem) {
+        existingItem.qty = (Number(existingItem.qty) || 1) + 1;
+      } else {
+        cart.push({
+          id: currentProduct.id,
+          name: currentProduct.name || currentProduct.title,
+          price: currentProduct.price,
+          image: currentProduct.image,
+          qty: 1,
+          size: selectedSize,
+          color: selectedColor
+        });
+      }
+
+      saveCart(cart);
+      closeModal();
+      openCartDrawer();
+    }
+
+    function handleModalBuyNow() {
+      if (!currentProduct) return;
+      handleModalAddToCart();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details | FENEX</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&display=swap" rel="stylesheet">
+  
+  <style>
+    .product-details-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      padding: 50px 5%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .gallery-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .main-img-box img {
+      width: 100%;
+      height: 480px;
+      object-fit: cover;
+      border: 1px solid var(--border-color, #eee);
+      border-radius: 4px;
+      background: #f9f9f9;
+    }
+
+    .thumbnail-list {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .thumbnail-list img {
+      width: 80px;
+      height: 90px;
+      object-fit: cover;
+      border: 1px solid var(--border-color, #ddd);
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.3s, border-color 0.3s;
+      border-radius: 4px;
+    }
+
+    .thumbnail-list img.active, 
+    .thumbnail-list img:hover {
+      opacity: 1;
+      border-color: var(--text-color, #000);
+    }
+
+    .details-content h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .price-wrap {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--text-color, #111);
+    }
+
+    .description {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 25px;
+      line-height: 1.8;
+      white-space: pre-line;
+    }
+
+    .option-title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .size-selector {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    .size-option {
+      width: 45px;
+      height: 40px;
+      border: 1px solid var(--border-color, #ccc);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--bg-color, #fff);
+      color: var(--text-color, #111);
+      border-radius: 4px;
+      user-select: none;
+    }
+
+    .size-option.active {
+      background: #000 !important;
+      color: #fff !important;
+      border-color: #000 !important;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .qty-picker {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--border-color, #ccc);
+      width: 120px;
+      border-radius: 4px;
+    }
+
+    .qty-btn {
+      width: 35px;
+      height: 45px;
+      background: transparent;
+      border: none;
+      color: var(--text-color, #111);
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .qty-input {
+      width: 50px;
+      text-align: center;
+      border: none;
+      background: transparent;
+      color: var(--text-color, #111);
+      font-weight: bold;
+    }
+
+    .btn-add-cart {
+      flex: 1;
+      background: var(--accent-color, #000);
+      color: var(--bg-color, #fff);
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: opacity 0.2s;
+      height: 45px;
+    }
+
+    .btn-buy-now {
+      background: #000;
+      color: #fff;
+      width: 100%;
+      height: 48px;
+      font-weight: bold;
+      border: none;
+      letter-spacing: 1px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .product-details-container {
+        grid-template-columns: 1fr;
+      }
+      .main-img-box img {
+        height: 380px;
+      }
+    }
+  </style>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-left">
+      <i class="fa-solid fa-bars menu-btn" id="menuBtn"></i>
+      <a href="index.html" class="logo">FENEX</a>
+    </div>
+
+    <nav class="nav-links">
+      <a href="index.html">HOME</a>
+      <a href="index.html#products">PRODUCTS</a>
+      <a href="#contact">CONTACT</a>
+    </nav>
+
+    <div class="nav-icons">
+      <i class="fa-solid fa-moon" id="themeToggleBtn"></i>
+      <a href="login.html" class="icon-link" id="userIcon"><i class="fa-regular fa-user"></i></a>
+      <a href="#" class="icon-link"><i class="fa-regular fa-heart"></i><span class="badge" id="wishlistCount">0</span></a>
+      <a href="#" class="icon-link" id="cartBtn">
+        <i class="fa-solid fa-bag-shopping"></i>
+        <span class="badge" id="cartCount">0</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Mobile Side Menu -->
+  <div class="menu-overlay" id="menuOverlay"></div>
+  <div class="mobile-menu" id="mobileMenu">
+    <div class="menu-header" style="display:flex; justify-content:space-between; align-items:center;">
+      <h3>MENU</h3>
+      <i class="fa-solid fa-xmark" id="closeMenuBtn" style="font-size:20px; cursor:pointer;"></i>
+    </div>
+    <ul class="mobile-links" style="list-style:none; padding: 20px 0;">
+      <li style="margin-bottom:15px;"><a href="index.html" style="text-decoration:none; color:var(--text-color); font-weight:bold;">HOME</a></li>
+      <li style="margin-bottom:15px;"><a href="index.html#products" style="text-decoration:none; color:var(--text-color); font-weight:bold;">PRODUCTS</a></li>
+      <li style="margin-bottom:15px;"><a href="login.html" style="text-decoration:none; color:var(--text-color); font-weight:bold;">LOGIN / REGISTER</a></li>
+    </ul>
+  </div>
+
+  <!-- Product Details Container -->
+  <main class="product-details-container">
+    
+    <!-- Image Gallery -->
+    <div class="gallery-container">
+      <div class="main-img-box">
+        <img id="pMainImg" src="https://via.placeholder.com/480?text=Loading..." alt="Product Image">
+      </div>
+      <div class="thumbnail-list" id="pThumbnails"></div>
+    </div>
+
+    <!-- Details Content -->
+    <div class="details-content">
+      <h1 id="pTitle">ডাটা লোড হচ্ছে...</h1>
+      <div class="price-wrap" id="pPrice">৳0.00</div>
+      
+      <p class="description" id="pDesc">
+        Premium quality luxury streetwear designed for ultimate comfort and high-end aesthetics. Crafted with modern minimal detailing.
+      </p>
+
+      <!-- Size Selector -->
+      <span class="option-title">SELECT SIZE:</span>
+      <div class="size-selector" id="sizeSelector">
+        <div class="size-option" onclick="selectSize(this)">S</div>
+        <div class="size-option active" onclick="selectSize(this)">M</div>
+        <div class="size-option" onclick="selectSize(this)">L</div>
+        <div class="size-option" onclick="selectSize(this)">XL</div>
+      </div>
+
+      <!-- Quantity & Actions -->
+      <span class="option-title">QUANTITY:</span>
+      <div class="action-group">
+        <div class="qty-picker">
+          <button class="qty-btn" onclick="updateQty(-1)">-</button>
+          <input type="text" id="productQty" class="qty-input" value="1" readonly>
+          <button class="qty-btn" onclick="updateQty(1)">+</button>
+        </div>
+        <button class="btn-add-cart" id="addCartBtn">ADD TO CART</button>
+      </div>
+
+      <button class="btn-buy-now" id="buyNowBtn">BUY IT NOW</button>
+    </div>
+
+  </main>
+
+  <!-- Cart Drawer -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <div class="cart-drawer" id="cartDrawer">
+    <div class="cart-header">
+      <h3>YOUR SHOPPING BAG</h3>
+      <i class="fa-solid fa-xmark close-cart" id="closeCartBtn" style="cursor:pointer; font-size:20px;"></i>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-footer">
+      <div class="cart-total">
+        <span>Subtotal:</span>
+        <span id="cartSubtotal">৳0</span>
+      </div>
+      <button class="btn-block" onclick="location.href='checkout.html'">CHECKOUT</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // ১. Firebase Initialization
+    const firebaseConfig = {
+      apiKey: "AIzaSyA4as297Sk35tTVqSQyOUztD5Vg9sV0Oy8",
+      authDomain: "fenex-ba1af.firebaseapp.com",
+      projectId: "fenex-ba1af",
+      storageBucket: "fenex-ba1af.firebasestorage.app",
+      messagingSenderId: "506989870286",
+      appId: "1:506989870286:web:75b50258542b88b443e49f"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
+    let selectedSize = 'M';
+    let currentProduct = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const productId = urlParams.get('id');
+
+      if (productId) {
+        // Firebase Firestore থেকে প্রোডাক্ট এর ডাটা আনা
+        db.collection("products").doc(productId).get().then((doc) => {
+          if (doc.exists) {
+            currentProduct = { id: doc.id, ...doc.data() };
+            renderProductDetails(currentProduct);
+          } else {
+            document.getElementById('pTitle').innerText = "প্রোডাক্টটি পাওয়া যায়নি!";
+          }
+        }).catch((err) => {
+          console.error("Error fetching product: ", err);
+          document.getElementById('pTitle').innerText = "ডাটা লোড করতে সমস্যা হয়েছে!";
+        });
+      } else {
+        document.getElementById('pTitle').innerText = "কোনো প্রোডাক্ট সিলেক্ট করা হয়নি!";
+      }
+    });
+
+    // ডাটা রেন্ডার করার ফাংশন
+    function renderProductDetails(product) {
+      const title = product.name || product.title || "Product";
+      let price = product.price || 0;
+      if (typeof price === 'string') {
+        price = parseFloat(price.replace(/[^0-9.]/g, '')) || 0;
+      }
+
+      // ছবির লিঙ্ক পাওয়ার লজিক
+      const mainImageUrl = product.image || product.img || (product.images ? product.images[0] : '');
+
+      document.getElementById('pTitle').innerText = title;
+      document.getElementById('pPrice').innerText = `৳${price}`;
+      
+      if (product.desc || product.description) {
+        document.getElementById('pDesc').innerText = product.desc || product.description;
+      }
+
+      const mainImg = document.getElementById('pMainImg');
+      if (mainImg) {
+        mainImg.src = mainImageUrl || 'https://via.placeholder.com/480?text=No+Image';
+      }
+
+      // থাম্বনেইল হ্যান্ডলিং
+      const thumbContainer = document.getElementById('pThumbnails');
+      if (thumbContainer) {
+        const galleryImages = (product.images && product.images.length > 0) 
+                              ? product.images 
+                              : [mainImageUrl];
+
+        if (galleryImages[0]) {
+          thumbContainer.innerHTML = galleryImages.map((imgUrl, idx) => `
+            <img class="${idx === 0 ? 'active' : ''}" onclick="changeImage(this, '${imgUrl}')" src="${imgUrl}">
+          `).join('');
+        }
+      }
+
+      // বাটন হ্যান্ডলার
+      document.getElementById('addCartBtn').onclick = () => {
+        const qty = parseInt(document.getElementById('productQty').value) || 1;
+        handleAddToCart(product, qty, selectedSize);
+      };
+
+      document.getElementById('buyNowBtn').onclick = () => {
+        const qty = parseInt(document.getElementById('productQty').value) || 1;
+        handleAddToCart(product, qty, selectedSize, false);
+        window.location.href = 'checkout.html';
+      };
+    }
+
+    function handleAddToCart(product, quantity, size, openDrawer = true) {
+      let cart = typeof getCart === 'function' ? getCart() : JSON.parse(localStorage.getItem('FENEX_CART')) || [];
+      const title = product.name || product.title;
+      const img = product.image || product.img;
+      const existingIndex = cart.findIndex(item => String(item.id) === String(product.id) && item.size === size);
+
+      if (existingIndex > -1) {
+        cart[existingIndex].qty += quantity;
+      } else {
+        cart.push({
+          id: product.id,
+          name: title,
+          price: product.price,
+          image: img,
+          qty: quantity,
+          size: size
+        });
+      }
+
+      if (typeof saveCart === 'function') {
+        saveCart(cart);
+      } else {
+        localStorage.setItem('FENEX_CART', JSON.stringify(cart));
+      }
+
+      if (openDrawer && typeof openCartDrawer === 'function') {
+        openCartDrawer();
+      } else if (openDrawer) {
+        alert("প্রোডাক্ট কার্টে যুক্ত হয়েছে!");
+      }
+    }
+
+    function changeImage(element, url) {
+      const mainImg = document.getElementById('pMainImg');
+      if (mainImg) mainImg.src = url;
+      document.querySelectorAll('#pThumbnails img').forEach(img => img.classList.remove('active'));
+      element.classList.add('active');
+    }
+
+    function selectSize(element) {
+      document.querySelectorAll('.size-option').forEach(opt => opt.classList.remove('active'));
+      element.classList.add('active');
+      selectedSize = element.innerText.trim();
+    }
+
+    function updateQty(change) {
+      const qtyInput = document.getElementById('productQty');
+      let currentVal = (parseInt(qtyInput.value) || 1) + change;
+      if (currentVal < 1) currentVal = 1;
+      qtyInput.value = currentVal;
+    }
+  </script>
+</body>
+</html>

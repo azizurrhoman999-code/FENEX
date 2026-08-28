@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order History & Tracking | FENEX</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; }
+    body { background: #f4f6f9; color: #111; padding: 20px 5%; }
+    .header-title { font-size: 1.8rem; font-weight: 800; letter-spacing: 2px; margin-bottom: 25px; text-align: center; }
+    .tracking-container { max-width: 650px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .search-box { display: flex; gap: 10px; margin-bottom: 25px; }
+    .form-control { width: 100%; padding: 12px 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.95rem; outline: none; }
+    .btn-search { background: #000; color: #fff; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; }
+    .order-card { background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 18px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
+    .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 12px; }
+    .status-badge { padding: 4px 10px; border-radius: 4px; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-delivered { background: #d4edda; color: #155724; }
+    .item-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; font-size: 0.88rem; }
+    .item-img { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+
+  <h1 class="header-title">FENEX <span style="font-size:14px; font-weight:normal;">(Order Tracking)</span></h1>
+
+  <div class="tracking-container">
+    <h3 style="margin-bottom: 10px; text-align: center;">আপনার অর্ডার ট্র্যাক করুন</h3>
+    <p style="text-align: center; color: #666; font-size: 0.85rem; margin-bottom: 20px;">আপনার মোবাইল নম্বর বা অর্ডার আইডি লিখে সার্চ করুন</p>
+    
+    <div class="search-box">
+      <input type="text" id="searchInput" class="form-control" placeholder="মোবাইল নম্বর অথবা Order ID দিন...">
+      <button onclick="searchOrders()" class="btn-search"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+    </div>
+
+    <div id="resultsContainer"></div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      loadCustomerLocalOrders();
+    });
+
+    function loadCustomerLocalOrders() {
+      try {
+        const allOrders = JSON.parse(localStorage.getItem('FENEX_ORDERS')) || JSON.parse(localStorage.getItem('orders')) || [];
+        renderOrders(allOrders);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function searchOrders() {
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+      const allOrders = JSON.parse(localStorage.getItem('FENEX_ORDERS')) || JSON.parse(localStorage.getItem('orders')) || [];
+
+      if (!query) {
+        renderOrders(allOrders);
+        return;
+      }
+
+      const filtered = allOrders.filter(function(o) {
+        const phone = (o.phone || o.customerPhone || '').toLowerCase();
+        const id = (o.id || o.orderId || '').toLowerCase();
+        return phone.includes(query) || id.includes(query);
+      });
+
+      renderOrders(filtered);
+    }
+
+    function renderOrders(orders) {
+      const container = document.getElementById('resultsContainer');
+
+      if (!orders || orders.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#888; margin-top:20px;">কোনো অর্ডারের তথ্য পাওয়া যায়নি!</p>';
+        return;
+      }
+
+      let html = '';
+      orders.forEach(function(order) {
+        const items = order.items || [];
+        const statusClass = order.status === 'Delivered' ? 'status-delivered' : 'status-pending';
+
+        let itemsHtml = '';
+        items.forEach(function(i) {
+          itemsHtml += `
+            <div class="item-row">
+              <img src="${i.image || 'https://via.placeholder.com/45'}" class="item-img" onerror="this.src='https://via.placeholder.com/45'">
+              <div>
+                <strong>${i.name || i.title || 'Product'}</strong><br>
+                <small style="color:#666;">Size: ${i.size || 'M'} | Color: ${i.color || 'Standard'} | Qty: ${i.qty || 1}</small>
+              </div>
+            </div>
+          `;
+        });
+
+        html += `
+          <div class="order-card">
+            <div class="order-header">
+              <div>
+                <strong style="font-size:0.95rem;">Order #${order.id || order.orderId}</strong><br>
+                <small style="color:#777;">তারিখ: ${order.date || 'N/A'}</small>
+              </div>
+              <span class="status-badge ${statusClass}">${order.status || 'Pending'}</span>
+            </div>
+            
+            <div style="margin-bottom:10px;">
+              ${itemsHtml}
+            </div>
+
+            <div style="border-top: 1px dashed #eee; padding-top: 8px; display:flex; justify-content:space-between; font-size:0.88rem;">
+              <span>পেমেন্ট: <strong>${order.paymentMethod || 'COD'}</strong></span>
+              <span>মোট: <strong>৳${order.totalPrice || order.totalAmount || 0}</strong></span>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+  </script>
+</body>
+</html>

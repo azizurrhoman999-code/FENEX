@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FENEX | The Future of Style</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Announcement Bar -->
+  <div class="announcement-bar">
+    <p>🔥 ফ্রি শিপিং ৫০$+ অর্ডারে | কুপন কোড: <b>FENEX10</b></p>
+  </div>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-left">
+      <i class="fa-solid fa-bars menu-btn" id="menuBtn"></i>
+      <a href="index.html" class="logo">FENEX</a>
+    </div>
+
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html" class="active">HOME</a>
+      <a href="shop.html">PRODUCTS</a>      
+      <a href="order-tracking.html"><i class="fa-solid fa-truck-fast"></i> TRACK ORDER</a>
+      <a href="#contact">CONTACT</a>
+    </nav>
+
+    <div class="nav-icons">
+      <i class="fa-solid fa-moon" id="themeToggleBtn"></i>
+      <i class="fa-solid fa-magnifying-glass" id="searchBtn"></i>
+      
+      <!-- ডাইনামিক ইউজার ও প্রোফাইল ড্রপডাউন -->
+      <div class="user-profile-wrapper" style="position: relative; display: inline-block;">
+        <button type="button" onclick="handleUserIconClick()" class="icon-link" style="background: none; border: none; cursor: pointer; color: inherit; font-size: 18px; outline: none; padding: 0 5px;">
+          <i class="fa-regular fa-user" id="userIcon"></i>
+        </button>
+
+        <!-- প্রোফাইল কার্ড -->
+        <div id="userProfileCard" style="display: none; position: absolute; right: 0; top: 35px; width: 220px; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 8px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 1000; text-align: left;">
+          <div style="font-size: 14px; font-weight: 600;" id="modalUserName">User Name</div>
+          <div style="font-size: 12px; color: #aaa; margin-bottom: 10px; word-break: break-all;" id="modalUserEmail">user@gmail.com</div>
+          <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
+          
+          <!-- অ্যাডমিন প্যানেল বাটন (শুধু অ্যাডমিনের জন্য দৃশ্যমান হবে) -->
+          <a href="admin.html" id="modalAdminBtn" style="display: none; width: 100%; text-align: center; background: #ff4757; color: white; border: none; padding: 8px 0; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: bold; margin-bottom: 8px;">
+            <i class="fa-solid fa-user-shield"></i> Admin Panel
+          </a>
+
+          <!-- লগআউট বাটন -->
+          <button onclick="logoutUser()" style="width: 100%; background: #333; color: white; border: none; padding: 8px 0; border-radius: 4px; cursor: pointer; font-size: 13px;">
+            <i class="fa-solid fa-right-from-bracket"></i> Logout
+          </button>
+        </div>
+      </div>
+
+      <a href="#" class="icon-link"><i class="fa-regular fa-heart"></i><span class="badge" id="wishlistCount">0</span></a>
+      <a href="cart.html" class="cart-icon-wrap" id="cartBtn" style="cursor:pointer; position:relative; text-decoration:none; color:inherit;">
+        <i class="fa-solid fa-bag-shopping"></i>
+        <span class="badge" id="cartCount">0</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Mobile Menu Drawer & Overlay -->
+  <div class="menu-overlay" id="menuOverlay"></div>
+  <div class="mobile-menu" id="mobileMenu">
+    <div class="menu-header">
+      <h3>MENU</h3>
+      <i class="fa-solid fa-xmark" id="closeMenuBtn" style="font-size:20px; cursor:pointer;"></i>
+    </div>
+    <ul class="mobile-links" style="list-style:none; padding: 20px 0;">
+      <li style="margin-bottom:15px;"><a href="index.html" style="text-decoration:none; color:var(--text-color); font-weight:bold;">HOME</a></li>
+      <li style="margin-bottom:15px;"><a href="shop.html" style="text-decoration:none; color:var(--text-color); font-weight:bold;">ALL PRODUCTS</a></li>
+      <li style="margin-bottom:15px;"><a href="order-tracking.html" style="text-decoration:none; color:var(--text-color); font-weight:bold;"><i class="fa-solid fa-truck-fast"></i> TRACK ORDER</a></li>
+      <li style="margin-top:15px;"><a href="#contact" style="text-decoration:none; color:var(--text-color); font-weight:bold;">CONTACT</a></li>
+    </ul>
+  </div>
+
+  <!-- Search Popup Overlay -->
+  <div class="search-overlay" id="searchOverlay">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search products (e.g. Jacket, Suit)...">
+      <i class="fa-solid fa-xmark close-search" id="closeSearchBtn"></i>
+    </div>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+
+  <!-- Banner & Dropdown Categories -->
+  <section style="position: relative; width: 100%; background: #000;">
+    <div style="position: relative; width: 100%;">
+      <img src="brand-banner.png" alt="FENEX Fashion Banner" style="width: 100%; height: auto; display: block; opacity: 0.9;" onerror="this.src='https://via.placeholder.com/1200x400?text=FENEX+Fashion'">
+      <div style="position: absolute; bottom: 12px; left: 10px; right: 10px; z-index: 10;">
+        <div style="display: flex; gap: 8px;">
+          <button onclick="toggleCategory('men')" style="flex: 1; background: #ffffff; color: #000; border: none; padding: 8px 12px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; cursor: pointer; border-radius: 4px;">MEN &rarr;</button>
+          <button onclick="toggleCategory('women')" style="flex: 1; background: #ffffff; color: #000; border: none; padding: 8px 12px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; cursor: pointer; border-radius: 4px;">WOMEN &rarr;</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEN POPUP CATEGORIES -->
+    <div style="max-width: 100%; padding: 0 10px;">
+      <div id="men-popup" style="display: none; background: #121212; border: 1px solid #2a2a2a; border-radius: 6px; padding: 10px; margin-top: 8px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #222;">
+          <span style="color: #aaa; font-size: 0.75rem; font-weight: 700;">MEN CATEGORIES</span>
+          <span onclick="toggleCategory('men')" style="color: #888; cursor: pointer; font-size: 1.2rem;">&times;</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
+          <a href="shop.html?gender=men&category=Shirt" style="padding: 7px; background: #222; color: #eee; text-align: center; border-radius: 4px; text-decoration: none; font-size: 0.75rem;">Shirt</a>
+          <a href="shop.html?gender=men&category=T-Shirt" style="padding: 7px; background: #222; color: #eee; text-align: center; border-radius: 4px; text-decoration: none; font-size: 0.75rem;">T-Shirt</a>
+          <a href="shop.html?gender=men&category=Pant" style="padding: 7px; background: #222; color: #eee; text-align: center; border-radius: 4px; text-decoration: none; font-size: 0.75rem;">Pant</a>
+          <a href="shop.html?gender=men&category=Shoes" style="padding: 7px; background: #222; color: #eee; text-align: center; border-radius: 4px; text-decoration: none; font-size: 0.75rem;">Shoes</a>
+          <a href="shop.html?gender=men&category=Watch" style="padding: 7px; background: #222; color: #eee; text-align: center; border-radius: 4px; text-decoration: none; font-size: 0.75rem;">Watch</a>
+          <a href="shop.html?gender=men&category=Sunglasses" style="padding: 7px; background: #222; color: #eee; text-align: center; border-radius: 4px; text-decoration: none; font-size: 0.75rem;">Sunglasses</a>
+          <a href="shop.html?gender=men&category=Combo%20Bundle" style="padding: 7px; background: #222; color: #eee; text-align: center; border-radius: 4px; text-decoration: none; font-size: 0.75rem; grid-column: span 2;">Combo Bundle</a>
+        </div>
+      </div>
+
+      <!-- WOMEN POPUP CATEGORIES -->
+      <div id="women-popup" style="display: none; background: #121212; border: 1px solid #2a2a2a; border-radius: 6px; padding: 10px; margin-top: 8px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #222;">
+          <span style="color: #aaa; font-size: 0.75rem; font-weight: 700;">WOMEN CATEGORIES</span>
+          <span onclick="toggleCategory('women')" style="color: #888; cursor: pointer; font-size: 1.2rem;">&times;</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
+          <a href="shop.html?gender=women&category=Tops" style="padding: 7px; background: #222; color: #eee; text-align: center; border-radius: 4px; text-decoration: none; font-size: 0.75rem;">Tops & Dress</a>
+          <a href="shop.html?gender=women&category=Bags" style="padding: 7px; background: #222; color: #eee; text-align: center; border-radius: 4px; text-decoration: none; font-size: 0.75rem;">Bags</a>
+          <a href="shop.html?gender=women&category=Pant" style="padding: 7px; background: #222; color: #eee; text-align: center; border-radius: 4px; text-decoration: none; font-size: 0.75rem;">Pant</a>
+          <a href="shop.html?gender=women&category=Watch" style="padding: 7px; background: #222; color: #eee; text-align: center; border-radius: 4px; text-decoration: none; font-size: 0.75rem;">Watch</a>
+          <a href="shop.html?gender=women&category=Combo%20Bundle" style="padding: 7px; background: #222; color: #eee; text-align: center; border-radius: 4px; text-decoration: none; font-size: 0.75rem; grid-column: span 2;">Combo Bundle</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Products Section -->
+  <section class="products-section" id="products">
+    <div class="section-header">
+      <h2>FEATURED COLLECTION</h2>
+      <p>Explore our top picked designs</p>
+    </div>
+    <div class="product-grid" id="productGrid"></div>
+  </section>
+
+  <!-- Fixed WhatsApp Floating Button -->
+  <a href="https://api.whatsapp.com/send?phone=8801400508809&text=Hello%20FENEX,%20I%20need%20help!" 
+     class="whatsapp-float" 
+     target="_blank" 
+     aria-label="Chat on WhatsApp">
+    <i class="fa-brands fa-whatsapp"></i>
+  </a>
+
+  <!-- Cart Drawer -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <div class="cart-drawer" id="cartDrawer">
+    <div class="cart-header">
+      <h3>YOUR SHOPPING BAG</h3>
+      <i class="fa-solid fa-xmark close-cart" id="closeCartBtn"></i>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-footer">
+      <div class="cart-total">
+        <span>Subtotal:</span>
+        <span id="cartSubtotal">৳0</span>
+      </div>
+      <p class="shipping-note">Taxes and shipping calculated at checkout.</p>
+      <button class="btn btn-primary btn-block" onclick="location.href='checkout.html'">PROCEED TO CHECKOUT</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer" id="contact">
+    <div class="footer-content" style="text-align: center; margin-bottom: 15px;">
+      <div class="footer-brand">
+        <h2>FENEX</h2>
+        <p>Premium streetwear and minimalist fashion brand.</p>
+        <div style="margin-top: 10px;">
+          <a href="order-tracking.html" style="color: inherit; text-decoration: none; font-weight: bold; font-size: 0.9rem;">
+            <i class="fa-solid fa-truck-fast"></i> Track Your Order / History
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer-bottom" style="text-align: center; margin-top: 20px;">
+      <p>&copy; 2026 FENEX. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

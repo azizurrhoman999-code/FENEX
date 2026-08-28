@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Shopping Cart | FENEX</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background-color: #f9f9f9;
+      color: #111;
+    }
+    header {
+      background: #000;
+      color: #fff;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.2rem;
+      letter-spacing: 1px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      background: #ffffff;
+      color: #111;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .page-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 10px;
+    }
+    .cart-item {
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      border: 1px solid #eee;
+    }
+    .cart-img {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 6px;
+      background: #f0f0f0;
+    }
+    .item-details {
+      flex: 1;
+    }
+    .item-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .item-meta {
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .item-price {
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .qty-btn {
+      background: #eee;
+      border: 1px solid #ccc;
+      width: 26px;
+      height: 26px;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .remove-btn {
+      color: #d90429;
+      background: none;
+      border: none;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .cart-summary {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      border: 1px solid #eee;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+    }
+    .summary-total {
+      font-size: 1.1rem;
+      font-weight: 800;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+    .checkout-btn {
+      width: 100%;
+      background: #000;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    .empty-cart {
+      text-align: center;
+      padding: 50px 0;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-title">FENEX STORE</div>
+  </header>
+
+  <div class="container">
+    <a href="shop.html" class="nav-btn">&#8592; Continue Shopping</a>
+    <h2 class="page-title">MY CART</h2>
+
+    <div id="cart-list"></div>
+
+    <div id="cart-summary-box" class="cart-summary" style="display: none;">
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span id="subtotal">৳ 0</span>
+      </div>
+      <div class="summary-row">
+        <span>Estimated Delivery Fee</span>
+        <span>৳ 60</span>
+      </div>
+      <div class="summary-row summary-total">
+        <span>Total</span>
+        <span id="grand-total">৳ 0</span>
+      </div>
+      <button class="checkout-btn" onclick="proceedToCheckout()">Proceed to Checkout</button>
+    </div>
+  </div>
+
+  <script>
+    function renderCart() {
+      const cart = JSON.parse(localStorage.getItem('fenex_cart')) || [];
+      const cartList = document.getElementById('cart-list');
+      const summaryBox = document.getElementById('cart-summary-box');
+
+      if (cart.length === 0) {
+        cartList.innerHTML = `<div class="empty-cart"><h3>Your cart is empty!</h3></div>`;
+        summaryBox.style.display = 'none';
+        return;
+      }
+
+      summaryBox.style.display = 'block';
+      let total = 0;
+
+      cartList.innerHTML = cart.map((item, index) => {
+        const itemQty = Number(item.qty || item.quantity || 1);
+        const itemPrice = Number(item.price || 0);
+        const itemTotal = itemPrice * itemQty;
+        const itemName = item.name || item.title || 'Product';
+        const itemImg = item.image || item.img || 'https://via.placeholder.com/100';
+        
+        total += itemTotal;
+
+        return `
+          <div class="cart-item">
+            <img src="${itemImg}" class="cart-img" onerror="this.src='https://via.placeholder.com/100'">
+            <div class="item-details">
+              <div class="item-name">${itemName}</div>
+              <div class="item-meta">
+                ${item.size ? `Size: ${item.size}` : ''} 
+                ${item.color ? `| Color: ${item.color}` : ''}
+              </div>
+              <div class="item-price">৳ ${itemPrice} × ${itemQty} = ৳ ${itemTotal}</div>
+            </div>
+            <div class="qty-controls">
+              <button class="qty-btn" onclick="changeQty(${index}, -1)">-</button>
+              <span>${itemQty}</span>
+              <button class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
+              <button class="remove-btn" onclick="removeItem(${index})">Remove</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('subtotal').innerText = `৳ ${total}`;
+      document.getElementById('grand-total').innerText = `৳ ${total + 60}`;
+    }
+
+    function changeQty(index, change) {
+      let cart = JSON.parse(localStorage.getItem('fenex_cart')) || [];
+      if (cart[index]) {
+        let currentQty = Number(cart[index].qty || cart[index].quantity || 1);
+        currentQty += change;
+
+        if (currentQty <= 0) {
+          cart.splice(index, 1);
+        } else {
+          cart[index].qty = currentQty;
+          cart[index].quantity = currentQty;
+        }
+
+        localStorage.setItem('fenex_cart', JSON.stringify(cart));
+        renderCart();
+      }
+    }
+
+    function removeItem(index) {
+      let cart = JSON.parse(localStorage.getItem('fenex_cart')) || [];
+      cart.splice(index, 1);
+      localStorage.setItem('fenex_cart', JSON.stringify(cart));
+      renderCart();
+    }
+
+    function proceedToCheckout() {
+      window.location.href = "checkout.html";
+    }
+
+    document.addEventListener('DOMContentLoaded', renderCart);
+  </script>
+</body>
+</html>

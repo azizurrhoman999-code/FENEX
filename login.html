@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="bn" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login / Register - FENEX</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #f8f9fa; font-family: 'Montserrat', sans-serif; margin: 0; }
+    .auth-header { padding: 15px 20px; border-bottom: 1px solid #eee; background: #fff; display: flex; justify-content: space-between; align-items: center; }
+    .auth-header .logo { font-size: 22px; font-weight: 800; color: #000; text-decoration: none; }
+    .auth-container { max-width: 400px; margin: 40px auto; padding: 30px 25px; background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    .auth-tabs { display: flex; margin-bottom: 25px; border-bottom: 2px solid #eee; }
+    .auth-tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-weight: 700; color: #888; transition: all 0.3s ease; }
+    .auth-tab.active { color: #000; border-bottom: 2px solid #000; }
+    .auth-form { display: none; }
+    .auth-form.active { display: block; }
+    .form-group { margin-bottom: 18px; position: relative; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+    .form-group input { width: 100%; padding: 11px; padding-right: 40px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; outline: none; font-size: 14px; }
+    .form-group input:focus { border-color: #000; }
+    
+    /* Password Eye Icon Style */
+    .toggle-password { position: absolute; right: 12px; top: 36px; cursor: pointer; color: #777; font-size: 15px; }
+    .toggle-password:hover { color: #000; }
+
+    .auth-btn { width: 100%; padding: 12px; background: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; font-weight: 700; letter-spacing: 0.5px; transition: background 0.2s; }
+    .auth-btn:hover { background: #333; }
+    
+    /* Google Sign-In Button */
+    .divider { text-align: center; margin: 20px 0; position: relative; }
+    .divider::before { content: ""; position: absolute; top: 50%; left: 0; right: 0; border-top: 1px solid #eee; z-index: 1; }
+    .divider span { background: #fff; padding: 0 10px; position: relative; z-index: 2; font-size: 12px; color: #777; font-weight: 600; }
+    .google-btn { width: 100%; padding: 11px; background: #fff; color: #333; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .google-btn:hover { background: #f5f5f5; }
+  </style>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header class="auth-header">
+    <a href="index.html" class="logo">FENEX</a>
+    <a href="index.html" style="text-decoration: none; color: #555; font-size: 14px;"><i class="fa-solid fa-arrow-left"></i> হোম-এ ফিরে যান</a>
+  </header>
+
+  <!-- Auth Container -->
+  <div class="auth-container">
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Login</div>
+      <div class="auth-tab" onclick="switchTab('register')">Register</div>
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm" class="auth-form active">
+      <div class="form-group">
+        <label>ইমেইল এড্রেস</label>
+        <input type="email" id="loginId" placeholder="আপনার ইমেইল দিন" required>
+      </div>
+      <div class="form-group">
+        <label>পাসওয়ার্ড</label>
+        <input type="password" id="loginPass" placeholder="পাসওয়ার্ড দিন" required>
+        <i class="fa-solid fa-eye toggle-password" onclick="togglePasswordVisibility('loginPass', this)"></i>
+      </div>
+      <button type="submit" class="auth-btn">লগইন করুন</button>
+      
+      <div class="divider"><span>অথবা</span></div>
+      <button type="button" class="google-btn" onclick="loginWithGoogle()"><i class="fa-brands fa-google" style="color:#db4437;"></i> Google দিয়ে লগইন করুন</button>
+    </form>
+
+    <!-- Register Form -->
+    <form id="registerForm" class="auth-form">
+      <div class="form-group">
+        <label>আপনার নাম</label>
+        <input type="text" id="regName" placeholder="আপনার পুরো নাম" required>
+      </div>
+      <div class="form-group">
+        <label>ইমেইল এড্রেস</label>
+        <input type="email" id="regId" placeholder="আপনার ইমেইল দিন" required>
+      </div>
+      <div class="form-group">
+        <label>পাসওয়ার্ড</label>
+        <input type="password" id="regPass" placeholder="কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড" minlength="6" required>
+        <i class="fa-solid fa-eye toggle-password" onclick="togglePasswordVisibility('regPass', this)"></i>
+      </div>
+      <button type="submit" class="auth-btn">অ্যাকাউন্ট খুলুন</button>
+
+      <div class="divider"><span>অথবা</span></div>
+      <button type="button" class="google-btn" onclick="loginWithGoogle()"><i class="fa-brands fa-google" style="color:#db4437;"></i> Google দিয়ে সাইন-আপ করুন</button>
+    </form>
+  </div>
+
+  <script>
+    // ১. Firebase কনফিগারেশন
+    const firebaseConfig = {
+      apiKey: "AIzaSyA4as297Sk35tTVqSQyOUztD5Vg9sV0Oy8",
+      authDomain: "fenex-ba1af.firebaseapp.com",
+      projectId: "fenex-ba1af",
+      storageBucket: "fenex-ba1af.firebasestorage.app",
+      messagingSenderId: "506989870286",
+      appId: "1:506989870286:web:75b50258542b88b443e49f"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    // ২. অনুমোদিত অ্যাডমিন জিমেইল
+    const ADMIN_EMAIL = "azizurrhoman999@gmail.com";
+
+    // ৩. Password Show/Hide Toggle Function
+    function togglePasswordVisibility(inputId, icon) {
+      const passwordInput = document.getElementById(inputId);
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+      } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+      }
+    }
+
+    // ইউজার রোল অনুযায়ী রিডাইরেক্ট ফাংশন
+    function redirectUser(user) {
+      if (user && user.email === ADMIN_EMAIL) {
+        window.location.href = 'admin.html';
+      } else {
+        window.location.href = 'index.html';
+      }
+    }
+
+    // অলরেডি লগইন থাকলে রিডাইরেক্ট
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        redirectUser(user);
+      }
+    });
+
+    // Tab Switcher
+    function switchTab(tab) {
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+      
+      if (tab === 'login') {
+        document.querySelectorAll('.auth-tab')[0].classList.add('active');
+        document.getElementById('loginForm').classList.add('active');
+      } else {
+        document.querySelectorAll('.auth-tab')[1].classList.add('active');
+        document.getElementById('registerForm').classList.add('active');
+      }
+    }
+
+    // Email/Password Register Logic
+    document.getElementById('registerForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regId').value.trim();
+      const pass = document.getElementById('regPass').value;
+
+      firebase.auth().createUserWithEmailAndPassword(email, pass)
+        .then((userCredential) => {
+          return userCredential.user.updateProfile({ displayName: name }).then(() => {
+            alert("অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!");
+            redirectUser(userCredential.user);
+          });
+        })
+        .catch((error) => {
+          alert("Registration Error: " + error.message);
+        });
+    });
+
+    // Email/Password Login Logic
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginId').value.trim();
+      const pass = document.getElementById('loginPass').value;
+
+      firebase.auth().signInWithEmailAndPassword(email, pass)
+        .then((userCredential) => {
+          redirectUser(userCredential.user);
+        })
+        .catch((error) => {
+          alert("লগইন ব্যর্থ হয়েছে: ইমেইল বা পাসওয়ার্ড ভুল!");
+        });
+    });
+
+    // Google Sign-In Logic
+    function loginWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      firebase.auth().signInWithPopup(provider)
+        .then((result) => {
+          redirectUser(result.user);
+        })
+        .catch((error) => {
+          alert("Google Sign-In Error: " + error.message);
+        });
+    }
+  </script>
+</body>
+</html>
