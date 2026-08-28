@@ -198,7 +198,7 @@
 
     <nav class="nav-links">
       <a href="index.html">HOME</a>
-      <a href="index.html#products">PRODUCTS</a>
+      <a href="shop.html">PRODUCTS</a>
       <a href="#contact">CONTACT</a>
     </nav>
 
@@ -212,20 +212,6 @@
       </a>
     </div>
   </header>
-
-  <!-- Mobile Side Menu -->
-  <div class="menu-overlay" id="menuOverlay"></div>
-  <div class="mobile-menu" id="mobileMenu">
-    <div class="menu-header" style="display:flex; justify-content:space-between; align-items:center;">
-      <h3>MENU</h3>
-      <i class="fa-solid fa-xmark" id="closeMenuBtn" style="font-size:20px; cursor:pointer;"></i>
-    </div>
-    <ul class="mobile-links" style="list-style:none; padding: 20px 0;">
-      <li style="margin-bottom:15px;"><a href="index.html" style="text-decoration:none; color:var(--text-color); font-weight:bold;">HOME</a></li>
-      <li style="margin-bottom:15px;"><a href="index.html#products" style="text-decoration:none; color:var(--text-color); font-weight:bold;">PRODUCTS</a></li>
-      <li style="margin-bottom:15px;"><a href="login.html" style="text-decoration:none; color:var(--text-color); font-weight:bold;">LOGIN / REGISTER</a></li>
-    </ul>
-  </div>
 
   <!-- Product Details Container -->
   <main class="product-details-container">
@@ -244,7 +230,7 @@
       <div class="price-wrap" id="pPrice">৳0.00</div>
       
       <p class="description" id="pDesc">
-        Premium quality luxury streetwear designed for ultimate comfort and high-end aesthetics. Crafted with modern minimal detailing.
+        প্রোডাক্টের বিবরণ লোড হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...
       </p>
 
       <!-- Size Selector -->
@@ -289,23 +275,10 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- app.js-কে ক্যাশ ছাড়াই লোড করানোর জন্য v=3.0 দেওয়া হয়েছে -->
+  <script src="app.js?v=3.0"></script>
+  
   <script>
-    // ১. Firebase Initialization
-    const firebaseConfig = {
-      apiKey: "AIzaSyA4as297Sk35tTVqSQyOUztD5Vg9sV0Oy8",
-      authDomain: "fenex-ba1af.firebaseapp.com",
-      projectId: "fenex-ba1af",
-      storageBucket: "fenex-ba1af.firebasestorage.app",
-      messagingSenderId: "506989870286",
-      appId: "1:506989870286:web:75b50258542b88b443e49f"
-    };
-
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    const db = firebase.firestore();
-
     let selectedSize = 'M';
     let currentProduct = null;
 
@@ -313,33 +286,29 @@
       const urlParams = new URLSearchParams(window.location.search);
       const productId = urlParams.get('id');
 
-      if (productId) {
-        // Firebase Firestore থেকে প্রোডাক্ট এর ডাটা আনা
-        db.collection("products").doc(productId).get().then((doc) => {
-          if (doc.exists) {
-            currentProduct = { id: doc.id, ...doc.data() };
-            renderProductDetails(currentProduct);
-          } else {
-            document.getElementById('pTitle').innerText = "প্রোডাক্টটি পাওয়া যায়নি!";
-          }
-        }).catch((err) => {
-          console.error("Error fetching product: ", err);
-          document.getElementById('pTitle').innerText = "ডাটা লোড করতে সমস্যা হয়েছে!";
-        });
-      } else {
-        document.getElementById('pTitle').innerText = "কোনো প্রোডাক্ট সিলেক্ট করা হয়নি!";
+      if (!productId) {
+        document.getElementById('pTitle').innerText = "কোনো প্রোডাক্ট সিলেক্ট করা হয়নি!";
+        return;
       }
+
+      // Firestore Fetch Direct Call
+      db.collection("products").doc(productId).get().then((doc) => {
+        if (doc.exists) {
+          currentProduct = { id: doc.id, ...doc.data() };
+          renderSingleProductData(currentProduct);
+        } else {
+          document.getElementById('pTitle').innerText = "প্রোডাক্টটি পাওয়া যায়নি!";
+        }
+      }).catch((err) => {
+        console.error("Firestore Read Error:", err);
+        document.getElementById('pTitle').innerText = "ডাটা লোড করতে সমস্যা হয়েছে!";
+      });
     });
 
-    // ডাটা রেন্ডার করার ফাংশন
-    function renderProductDetails(product) {
+    function renderSingleProductData(product) {
       const title = product.name || product.title || "Product";
       let price = product.price || 0;
-      if (typeof price === 'string') {
-        price = parseFloat(price.replace(/[^0-9.]/g, '')) || 0;
-      }
 
-      // ছবির লিঙ্ক পাওয়ার লজিক
       const mainImageUrl = product.image || product.img || (product.images ? product.images[0] : '');
 
       document.getElementById('pTitle').innerText = title;
@@ -347,6 +316,8 @@
       
       if (product.desc || product.description) {
         document.getElementById('pDesc').innerText = product.desc || product.description;
+      } else {
+        document.getElementById('pDesc').innerText = "Premium quality streetwear designed for ultimate comfort and high-end aesthetics.";
       }
 
       const mainImg = document.getElementById('pMainImg');
@@ -354,37 +325,35 @@
         mainImg.src = mainImageUrl || 'https://via.placeholder.com/480?text=No+Image';
       }
 
-      // থাম্বনেইল হ্যান্ডলিং
+      // Thumbnails setup
       const thumbContainer = document.getElementById('pThumbnails');
-      if (thumbContainer) {
-        const galleryImages = (product.images && product.images.length > 0) 
-                              ? product.images 
-                              : [mainImageUrl];
-
-        if (galleryImages[0]) {
-          thumbContainer.innerHTML = galleryImages.map((imgUrl, idx) => `
-            <img class="${idx === 0 ? 'active' : ''}" onclick="changeImage(this, '${imgUrl}')" src="${imgUrl}">
-          `).join('');
-        }
+      if (thumbContainer && product.images && product.images.length > 0) {
+        thumbContainer.innerHTML = product.images.map((imgUrl, idx) => `
+          <img class="${idx === 0 ? 'active' : ''}" onclick="changeImage(this, '${imgUrl}')" src="${imgUrl}">
+        `).join('');
+      } else if(thumbContainer && mainImageUrl) {
+        thumbContainer.innerHTML = `<img class="active" onclick="changeImage(this, '${mainImageUrl}')" src="${mainImageUrl}">`;
       }
 
-      // বাটন হ্যান্ডলার
+      // Add to Cart Button Logic
       document.getElementById('addCartBtn').onclick = () => {
         const qty = parseInt(document.getElementById('productQty').value) || 1;
-        handleAddToCart(product, qty, selectedSize);
+        addToCartDetailsPage(product, qty, selectedSize);
       };
 
+      // Buy Now Button Logic
       document.getElementById('buyNowBtn').onclick = () => {
         const qty = parseInt(document.getElementById('productQty').value) || 1;
-        handleAddToCart(product, qty, selectedSize, false);
+        addToCartDetailsPage(product, qty, selectedSize);
         window.location.href = 'checkout.html';
       };
     }
 
-    function handleAddToCart(product, quantity, size, openDrawer = true) {
-      let cart = typeof getCart === 'function' ? getCart() : JSON.parse(localStorage.getItem('FENEX_CART')) || [];
+    function addToCartDetailsPage(product, quantity, size) {
+      let cart = getCart(); // app.js এর getCart() ব্যবহার করা হয়েছে
       const title = product.name || product.title;
       const img = product.image || product.img;
+
       const existingIndex = cart.findIndex(item => String(item.id) === String(product.id) && item.size === size);
 
       if (existingIndex > -1) {
@@ -400,17 +369,8 @@
         });
       }
 
-      if (typeof saveCart === 'function') {
-        saveCart(cart);
-      } else {
-        localStorage.setItem('FENEX_CART', JSON.stringify(cart));
-      }
-
-      if (openDrawer && typeof openCartDrawer === 'function') {
-        openCartDrawer();
-      } else if (openDrawer) {
-        alert("প্রোডাক্ট কার্টে যুক্ত হয়েছে!");
-      }
+      saveCart(cart); // app.js এর saveCart() ব্যবহার করা হয়েছে
+      openCartDrawer(); // app.js এর openCartDrawer() ব্যবহার করা হয়েছে
     }
 
     function changeImage(element, url) {

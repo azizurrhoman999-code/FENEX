@@ -1,4 +1,4 @@
-/* FENEX MASTER JAVASCRIPT (Firebase Integrated) */
+/* FENEX MASTER JAVASCRIPT (Firebase Integrated & Case-Insensitive Filter Fixed) */
 
 // ১. Firebase Configuration & Initialization
 const firebaseConfig = {
@@ -10,40 +10,31 @@ const firebaseConfig = {
   appId: "1:506989870286:web:75b50258542b88b443e49f"
 };
 
-// অনুমোদিত অ্যাডমিন জিমেইল (আপনার সঠিক জিমেইলটি দেওয়া হয়েছে)
-const ADMIN_EMAIL = "dreamboy50700@gmail.com";
+const ADMIN_EMAIL = "dreamboy50700@gmail.com".toLowerCase();
 
-// অ্যাপ ইনিশিয়ালাইজেশন চেক
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// গ্লোবাল ভ্যারিয়েবল
 let globalProductsCache = [];
 let currentUser = null;
 
 const CART_KEY = 'FENEX_CART';
 const COUPON_KEY = 'FENEX_APPLIED_COUPON';
 
-// ২. কার্ট থেকে ডাটা গেট করা
+// ২. কার্ট ফাংশনালিটি
 function getCart() {
-  try {
-    return JSON.parse(localStorage.getItem(CART_KEY)) || [];
-  } catch (e) {
-    return [];
-  }
+  try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch (e) { return []; }
 }
 
-// ৩. কার্টে ডাটা সেভ করা
 function saveCart(cart) {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
   updateCartCount();
   renderGlobalCart();
 }
 
-// ৪. কার্ট কাউন্ট আপডেট
 function updateCartCount() {
   const cart = getCart();
   const totalCount = cart.reduce((sum, item) => sum + Number(item.qty || item.quantity || 1), 0);
@@ -52,7 +43,6 @@ function updateCartCount() {
   });
 }
 
-// ৫. কার্ট ড্রয়ার ওপেন ও ক্লোজ
 function openCartDrawer() {
   const drawer = document.getElementById('cartDrawer');
   const overlay = document.getElementById('cartOverlay');
@@ -68,7 +58,6 @@ function closeCartDrawer() {
   if (overlay) overlay.classList.remove('open');
 }
 
-// ৬. ড্রয়ার কার্ট রেন্ডারিং (কুপন ডিসকাউন্টসহ)
 function renderGlobalCart() {
   const cartItemsContainer = document.getElementById('cartItems');
   const cartSubtotalEl = document.getElementById('cartSubtotal');
@@ -90,7 +79,6 @@ function renderGlobalCart() {
     const price = Number(item.price || 0);
     const itemTotal = price * qty;
     subtotal += itemTotal;
-
     const imgUrl = item.image || item.img || 'https://via.placeholder.com/60?text=Product';
 
     html += `
@@ -108,9 +96,7 @@ function renderGlobalCart() {
 
   cartItemsContainer.innerHTML = html;
 
-  // কুপন ডিসকাউন্ট হিসাব
   const appliedCoupon = JSON.parse(localStorage.getItem(COUPON_KEY));
-
   if (appliedCoupon && appliedCoupon.code === 'FENEX10') {
     const discount = (subtotal * appliedCoupon.percentage) / 100;
     const finalTotal = subtotal - discount;
@@ -122,12 +108,10 @@ function renderGlobalCart() {
   }
 }
 
-// ৭. কুপন অ্যাপ্লাই ও রিমুভ
 function applyCouponCode(inputCode) {
   const code = (inputCode || '').trim().toUpperCase();
   if (code === 'FENEX10') {
-    const couponData = { code: 'FENEX10', percentage: 10 };
-    localStorage.setItem(COUPON_KEY, JSON.stringify(couponData));
+    localStorage.setItem(COUPON_KEY, JSON.stringify({ code: 'FENEX10', percentage: 10 }));
     alert('🎉 অভিনন্দন! FENEX10 কুপনে ১০% ছাড় যোগ হয়েছে।');
     renderGlobalCart();
     return true;
@@ -148,7 +132,6 @@ function removeCartItem(index) {
   saveCart(cart);
 }
 
-// ৮. ক্যাটাগরি মেনু টগল
 function toggleCategory(gender) {
   const menPopup = document.getElementById('men-popup');
   const womenPopup = document.getElementById('women-popup');
@@ -161,7 +144,7 @@ function toggleCategory(gender) {
   }
 }
 
-// ৯. ফায়ারবেস থেকে রিয়েল-টাইম প্রোডাক্ট লোড ফাংশন
+// ৩. প্রোডাক্টস ফায়ারবেস লোডার
 function fetchFirebaseProducts(callback) {
   db.collection("products").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
     const products = [];
@@ -175,7 +158,7 @@ function fetchFirebaseProducts(callback) {
   });
 }
 
-// ১০. ক্যাটাগরি ফিল্টারিং ও রিয়েল-টাইম শপ গ্রিড রেন্ডার
+// 🛠️ ৪. নিখুঁত ক্যাটাগরি ও জেন্ডার ফিল্টারিং লজিক (FIXED)
 function loadCategoryProducts() {
   const productContainer = document.getElementById("productGrid") 
                         || document.getElementById("featuredProductsGrid") 
@@ -192,16 +175,22 @@ function loadCategoryProducts() {
 
   fetchFirebaseProducts((allProducts) => {
     const urlParams = new URLSearchParams(window.location.search);
-    const selectedGender = urlParams.get('gender'); 
-    const selectedCategory = urlParams.get('category');
+    
+    // URL থেকে ভ্যালু নেওয়ার সময় ছোট হাতের অক্ষরে এবং স্পেস/হাইফেন ক্লিন করে নেওয়া
+    const selectedGender = (urlParams.get('gender') || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const selectedCategory = (urlParams.get('category') || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
     const filteredProducts = allProducts.filter(p => {
-      const matchGender = !selectedGender || selectedGender === 'all' 
-        || (p.gender && p.gender.trim().toLowerCase() === selectedGender.trim().toLowerCase());
-        
-      const matchCategory = !selectedCategory || selectedCategory === 'all' 
-        || (p.category && p.category.trim().toLowerCase() === selectedCategory.trim().toLowerCase());
-        
+      // ডাটাবেস থেকে প্রোডাক্টের gender ও category ফরম্যাট ঠিক করা
+      const pGender = (p.gender || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      const pCategory = (p.category || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      // জেন্ডার ম্যাচিং
+      const matchGender = !selectedGender || selectedGender === 'all' || pGender === selectedGender || pGender.includes(selectedGender) || selectedGender.includes(pGender);
+      
+      // ক্যাটাগরি ম্যাচিং (যেমন: t-shirt, tshirt, shirt ফ্লেক্সিবল চেক)
+      const matchCategory = !selectedCategory || selectedCategory === 'all' || pCategory === selectedCategory || pCategory.includes(selectedCategory) || selectedCategory.includes(pCategory);
+
       return matchGender && matchCategory;
     });
 
@@ -231,15 +220,12 @@ function loadCategoryProducts() {
   });
 }
 
-// ১১. ডিটেইলস পেজে নেভিগেশন
 function goToDetails(productId) {
   window.location.href = `product-details.html?id=${productId}`;
 }
 
-// ১২. কুইক অ্যাড টু কার্ট
 function quickAddToCart(productId) {
   const product = globalProductsCache.find(p => p.id === productId);
-
   if (!product) return;
 
   let cart = getCart();
@@ -262,8 +248,8 @@ function quickAddToCart(productId) {
   openCartDrawer();
 }
 
-// ১৩. ইউজার আইকন ক্লিক ফ্লো (পপআপ টগল লজিক)
-function handleUserIconClick() {
+function handleUserIconClick(e) {
+  if (e) e.preventDefault();
   if (!currentUser) {
     window.location.href = "login.html";
   } else {
@@ -274,13 +260,11 @@ function handleUserIconClick() {
   }
 }
 
-// ১৪. সার্চ ফিল্টার
 function handleSearchInput(e) {
   const query = e.target.value.trim().toLowerCase();
   let resultsContainer = document.getElementById('searchResults');
   
   if (!resultsContainer) return;
-
   if (!query) {
     resultsContainer.innerHTML = '';
     return;
@@ -308,13 +292,12 @@ function handleSearchInput(e) {
   `).join('');
 }
 
-// ১৫. DOM Loaded Event Listener & Auth Observer
+// ৫. Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
   updateCartCount();
   renderGlobalCart();
   loadCategoryProducts();
 
-  // Firebase Auth State Observer
   auth.onAuthStateChanged((user) => {
     currentUser = user;
     const userIcon = document.getElementById('userIcon');
@@ -322,26 +305,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalUserEmail = document.getElementById('modalUserEmail');
     const modalAdminBtn = document.getElementById('modalAdminBtn');
     
+    const mobileLoggedOut = document.getElementById('mobileLoggedOut');
+    const mobileLoggedIn = document.getElementById('mobileLoggedIn');
+    const mobileUserName = document.getElementById('mobileUserName');
+    const mobileUserEmail = document.getElementById('mobileUserEmail');
+
+    if (userIcon) {
+      if (user) {
+        userIcon.innerHTML = `<i class="fa-solid fa-user" style="color:#2ec4b6;"></i>`;
+        userIcon.onclick = handleUserIconClick;
+        if (userIcon.tagName.toLowerCase() === 'a') {
+          userIcon.setAttribute('href', 'javascript:void(0);');
+        }
+      } else {
+        userIcon.innerHTML = `<i class="fa-regular fa-user"></i>`;
+        if (userIcon.tagName.toLowerCase() === 'a') {
+          userIcon.setAttribute('href', 'login.html');
+          userIcon.onclick = null;
+        } else {
+          userIcon.onclick = function() { window.location.href = "login.html"; };
+        }
+      }
+    }
+
     if (user) {
-      if (userIcon) userIcon.className = "fa-solid fa-user-check";
-      
       const name = user.displayName || user.email.split('@')[0];
       if (modalUserName) modalUserName.innerText = name;
       if (modalUserEmail) modalUserEmail.innerText = user.email;
 
-      // যদি জিমেইল অ্যাডমিনের হয়
-      if (user.email === ADMIN_EMAIL) {
-        if (modalAdminBtn) modalAdminBtn.style.display = 'block';
-      } else {
-        if (modalAdminBtn) modalAdminBtn.style.display = 'none';
-      }
+      if (mobileLoggedOut) mobileLoggedOut.style.display = 'none';
+      if (mobileLoggedIn) mobileLoggedIn.style.display = 'block';
+      if (mobileUserName) mobileUserName.innerText = name;
+      if (mobileUserEmail) mobileUserEmail.innerText = user.email;
+
+      const isUserAdmin = (user.email && user.email.trim().toLowerCase() === ADMIN_EMAIL);
+      if (modalAdminBtn) modalAdminBtn.style.display = isUserAdmin ? 'block' : 'none';
     } else {
-      if (userIcon) userIcon.className = "fa-regular fa-user";
+      if (mobileLoggedOut) mobileLoggedOut.style.display = 'block';
+      if (mobileLoggedIn) mobileLoggedIn.style.display = 'none';
       if (modalAdminBtn) modalAdminBtn.style.display = 'none';
     }
   });
 
-  // Cart Drawer Handlers
   const cartBtn = document.getElementById('cartBtn');
   const closeCartBtn = document.getElementById('closeCartBtn');
   const cartOverlay = document.getElementById('cartOverlay');
@@ -350,7 +355,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (closeCartBtn) closeCartBtn.addEventListener('click', closeCartDrawer);
   if (cartOverlay) cartOverlay.addEventListener('click', closeCartDrawer);
 
-  // Mobile Menu Handlers
   const menuBtn = document.getElementById('menuBtn');
   const closeMenuBtn = document.getElementById('closeMenuBtn');
   const mobileMenu = document.getElementById('mobileMenu');
@@ -371,7 +375,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (closeMenuBtn) closeMenuBtn.addEventListener('click', hideMenu);
   if (menuOverlay) menuOverlay.addEventListener('click', hideMenu);
 
-  // Search Toggle Handlers
   const searchBtn = document.getElementById('searchBtn');
   const closeSearchBtn = document.getElementById('closeSearchBtn');
   const searchOverlay = document.getElementById('searchOverlay');
@@ -393,11 +396,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (searchInput) {
-    searchInput.addEventListener('input', handleSearchInput);
-  }
+  if (searchInput) searchInput.addEventListener('input', handleSearchInput);
 
-  // Dark Mode Toggle Handler
   const themeToggleBtn = document.getElementById('themeToggleBtn');
   if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', () => {
@@ -408,7 +408,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Outside Click listener to close user popup dropdown
 document.addEventListener('click', function(event) {
   const profileWrapper = document.querySelector('.user-profile-wrapper');
   if (profileWrapper && !profileWrapper.contains(event.target)) {
@@ -417,9 +416,6 @@ document.addEventListener('click', function(event) {
   }
 });
 
-// Logout Function
 function logoutUser() {
-  auth.signOut().then(() => {
-    window.location.reload();
-  });
+  auth.signOut().then(() => { window.location.reload(); });
 }

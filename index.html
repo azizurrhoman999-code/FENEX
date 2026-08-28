@@ -25,7 +25,7 @@
 
     <nav class="nav-links" id="navLinks">
       <a href="index.html" class="active">HOME</a>
-      <a href="shop.html">PRODUCTS</a>      
+      <a href="shop.html">PRODUCTS</a>     
       <a href="order-tracking.html"><i class="fa-solid fa-truck-fast"></i> TRACK ORDER</a>
       <a href="#contact">CONTACT</a>
     </nav>
@@ -34,11 +34,9 @@
       <i class="fa-solid fa-moon" id="themeToggleBtn"></i>
       <i class="fa-solid fa-magnifying-glass" id="searchBtn"></i>
       
-      <!-- ডাইনামিক ইউজার ও প্রোফাইল ড্রপডাউন -->
+      <!-- ডাইনামিক ইউজার ও প্রোফাইল ড্রপডাউন (ডাবল আইকন ফিক্সড) -->
       <div class="user-profile-wrapper" style="position: relative; display: inline-block;">
-        <button type="button" onclick="handleUserIconClick()" class="icon-link" style="background: none; border: none; cursor: pointer; color: inherit; font-size: 18px; outline: none; padding: 0 5px;">
-          <i class="fa-regular fa-user" id="userIcon"></i>
-        </button>
+        <a class="icon-link" id="userIcon" style="cursor: pointer; font-size: 18px; text-decoration: none; color: inherit; display: inline-block;"></a>
 
         <!-- প্রোফাইল কার্ড -->
         <div id="userProfileCard" style="display: none; position: absolute; right: 0; top: 35px; width: 220px; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 8px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 1000; text-align: left;">
@@ -66,7 +64,7 @@
     </div>
   </header>
 
-  <!-- Mobile Menu Drawer & Overlay -->
+  <!-- Mobile Menu Drawer & Overlay (User Auth Section Added) -->
   <div class="menu-overlay" id="menuOverlay"></div>
   <div class="mobile-menu" id="mobileMenu">
     <div class="menu-header">
@@ -79,6 +77,30 @@
       <li style="margin-bottom:15px;"><a href="order-tracking.html" style="text-decoration:none; color:var(--text-color); font-weight:bold;"><i class="fa-solid fa-truck-fast"></i> TRACK ORDER</a></li>
       <li style="margin-top:15px;"><a href="#contact" style="text-decoration:none; color:var(--text-color); font-weight:bold;">CONTACT</a></li>
     </ul>
+
+    <!-- 📱 মোবাইল ইউজারদের জন্য ডাইনামিক সাইন-ইন / প্রোফাইল অপশন -->
+    <div class="mobile-auth-section" style="padding: 15px; border-top: 1px solid #333; margin-top: 15px;">
+      <!-- ইউজার লগইন না থাকলে এটি দেখাবে -->
+      <div id="mobileLoggedOut" style="display: block;">
+        <a href="login.html" class="auth-btn" style="display: block; text-align: center; padding: 10px; background: #000; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 14px;">
+          <i class="fa-solid fa-right-to-bracket" style="margin-right: 6px;"></i> Login / Sign Up
+        </a>
+      </div>
+
+      <!-- ইউজার লগইন থাকলে তার প্রোফাইল তথ্য ও লগআউট দেখাবে -->
+      <div id="mobileLoggedIn" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+          <i class="fa-solid fa-circle-user" style="font-size: 26px; color: #2ec4b6;"></i>
+          <div style="overflow: hidden;">
+            <div id="mobileUserName" style="font-size: 14px; font-weight: 700; color: var(--text-color, #fff); text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">User Name</div>
+            <div id="mobileUserEmail" style="font-size: 11px; color: #aaa; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">user@gmail.com</div>
+          </div>
+        </div>
+        <button onclick="logoutUser()" style="width: 100%; padding: 9px; background: #d90429; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Search Popup Overlay -->
@@ -194,6 +216,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=2.0"></script>
 </body>
 </html>

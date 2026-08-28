@@ -304,6 +304,11 @@
       color: #666;
     }
   </style>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -324,7 +329,7 @@
       <i class="fa-solid fa-moon" id="themeToggleBtn"></i>
       <a href="login.html" class="icon-link" id="userIcon"><i class="fa-regular fa-user"></i></a>
       <a href="#" class="icon-link"><i class="fa-regular fa-heart"></i><span class="badge" id="wishlistCount">0</span></a>
-      <div class="cart-icon-wrap" id="cartBtn" onclick="openCartDrawer()" style="cursor: pointer;">
+      <div class="cart-icon-wrap" id="cartBtn" style="cursor: pointer;">
         <i class="fa-solid fa-bag-shopping"></i>
         <span class="badge" id="cartCount">0</span>
       </div>
@@ -362,27 +367,28 @@
 
       <div class="filter-label">Men Collection</div>
       <div class="filter-bar">
-        <a href="shop.html?gender=men&category=Shirt" class="filter-btn">Shirt</a>
-        <a href="shop.html?gender=men&category=T-Shirt" class="filter-btn">T-Shirt</a>
-        <a href="shop.html?gender=men&category=Pant" class="filter-btn">Pant</a>
-        <a href="shop.html?gender=men&category=Shoes" class="filter-btn">Shoes</a>
-        <a href="shop.html?gender=men&category=Watch" class="filter-btn">Watch</a>
-        <a href="shop.html?gender=men&category=Sunglass" class="filter-btn">Sunglass</a>
-        <a href="shop.html?gender=men&category=Men-Bundle" class="filter-btn">Choice Bundle 🔥</a>
+        <a href="shop.html?gender=men&category=shirt" class="filter-btn">Shirt</a>
+        <a href="shop.html?gender=men&category=t-shirt" class="filter-btn">T-Shirt</a>
+        <a href="shop.html?gender=men&category=pant" class="filter-btn">Pant</a>
+        <a href="shop.html?gender=men&category=shoes" class="filter-btn">Shoes</a>
+        <a href="shop.html?gender=men&category=watch" class="filter-btn">Watch</a>
+        <a href="shop.html?gender=men&category=sunglass" class="filter-btn">Sunglass</a>
+        <a href="shop.html?gender=men&category=men-bundle" class="filter-btn">Choice Bundle 🔥</a>
       </div>
 
       <div class="filter-label">Women Collection</div>
       <div class="filter-bar">
-        <a href="shop.html?gender=women&category=Tops" class="filter-btn">Tops & Dress</a>
-        <a href="shop.html?gender=women&category=Bags" class="filter-btn">Bags</a>
-        <a href="shop.html?gender=women&category=Shoes" class="filter-btn">Shoes</a>
-        <a href="shop.html?gender=women&category=Jewelry" class="filter-btn">Jewelry</a>
-        <a href="shop.html?gender=women&category=Sunglass" class="filter-btn">Sunglass</a>
-        <a href="shop.html?gender=women&category=Women-Bundle" class="filter-btn">Choice Bundle 🔥</a>
+        <a href="shop.html?gender=women&category=tops" class="filter-btn">Tops & Dress</a>
+        <a href="shop.html?gender=women&category=bags" class="filter-btn">Bags</a>
+        <a href="shop.html?gender=women&category=shoes" class="filter-btn">Shoes</a>
+        <a href="shop.html?gender=women&category=jewelry" class="filter-btn">Jewelry</a>
+        <a href="shop.html?gender=women&category=sunglass" class="filter-btn">Sunglass</a>
+        <a href="shop.html?gender=women&category=women-bundle" class="filter-btn">Choice Bundle 🔥</a>
       </div>
     </div>
 
-    <div id="product-list" class="product-grid"></div>
+    <!-- Product Grid Container -->
+    <div id="shopProductGrid" class="product-grid"></div>
   </div>
 
   <!-- PRODUCT MODAL -->
@@ -417,17 +423,17 @@
   <!-- GLOBAL CART DRAWER -->
   <div class="cart-overlay" id="cartOverlay"></div>
   <div class="cart-drawer" id="cartDrawer">
-    <div class="cart-header">
+    <div class="cart-header" style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
       <h3>YOUR SHOPPING BAG</h3>
       <i class="fa-solid fa-xmark close-cart" id="closeCartBtn" style="cursor:pointer; font-size:20px;"></i>
     </div>
-    <div class="cart-items" id="cartItems"></div>
-    <div class="cart-footer">
-      <div class="cart-total">
+    <div class="cart-items" id="cartItems" style="padding:15px;"></div>
+    <div class="cart-footer" style="padding:15px; border-top:1px solid #eee;">
+      <div class="cart-total" style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:10px;">
         <span>Subtotal:</span>
         <span id="cartSubtotal">৳0</span>
       </div>
-      <button class="btn-block" onclick="alert('অর্ডার প্রসেস করার জন্য ধন্যবাদ!')">CHECKOUT</button>
+      <button class="btn-block" style="width:100%; padding:10px; background:#000; color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="window.location.href='checkout.html'">CHECKOUT</button>
     </div>
   </div>
 
@@ -437,46 +443,73 @@
     let selectedSize = '';
     let selectedColor = '';
 
-    // ফিল্টার ক্লিনিং ফাংশন (হাইফেন ও স্পেস হ্যান্ডেল করার জন্য)
+    // স্ট্রিং ফরম্যাট ক্লিন করার হেলপার ফাংশন (হাইফেন ও স্পেস জনিত পার্থক্য সমাধান করে)
     function cleanStr(str) {
       return str ? String(str).toLowerCase().replace(/[^a-z0-9]/g, '') : '';
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    // ফিল্টারিং ও প্রোডাক্ট রেন্ডারিং ফাংশন
+    function filterAndRenderProducts() {
       const urlParams = new URLSearchParams(window.location.search);
       const selectedGender = urlParams.get('gender');
       const selectedCategory = urlParams.get('category');
 
-      const productContainer = document.getElementById('product-list');
+      const productContainer = document.getElementById('shopProductGrid') || document.getElementById('product-list');
       const categoryHeading = document.getElementById('category-heading');
 
-      // app.js থেকে মাস্টার প্রোডাক্ট লিস্ট লোড
-      const allProductsList = typeof getAllProducts === 'function' ? getAllProducts() : (typeof products !== 'undefined' ? products : []);
-
-      let filteredList = allProductsList;
-
-      if (selectedGender && selectedCategory) {
-        categoryHeading.innerText = `${selectedGender.toUpperCase()} ${selectedCategory.replace('-', ' ').toUpperCase()} COLLECTION`;
-        filteredList = filteredList.filter(p => cleanStr(p.gender) === cleanStr(selectedGender) && cleanStr(p.category) === cleanStr(selectedCategory));
-      } else if (selectedGender) {
-        categoryHeading.innerText = `ALL ${selectedGender.toUpperCase()} COLLECTION`;
-        filteredList = filteredList.filter(p => cleanStr(p.gender) === cleanStr(selectedGender));
-      } else if (selectedCategory) {
-        categoryHeading.innerText = `${selectedCategory.replace('-', ' ').toUpperCase()} COLLECTION`;
-        filteredList = filteredList.filter(p => cleanStr(p.category) === cleanStr(selectedCategory));
-      } else {
-        categoryHeading.innerText = "ALL PRODUCTS";
+      // টাইটেল আপডেট
+      if (categoryHeading) {
+        if (selectedGender && selectedCategory) {
+          categoryHeading.innerText = `${selectedGender.toUpperCase()} ${selectedCategory.replace('-', ' ').toUpperCase()} COLLECTION`;
+        } else if (selectedGender) {
+          categoryHeading.innerText = `ALL ${selectedGender.toUpperCase()}'S COLLECTION`;
+        } else if (selectedCategory) {
+          categoryHeading.innerText = `${selectedCategory.replace('-', ' ').toUpperCase()} COLLECTION`;
+        } else {
+          categoryHeading.innerText = "ALL PRODUCTS";
+        }
       }
 
       if (!productContainer) return;
 
+      // ডাটা সোর্স (app.js এর cache বা fallback products array)
+      let rawList = (typeof globalProductsCache !== 'undefined' && globalProductsCache.length > 0) 
+                    ? globalProductsCache 
+                    : ((typeof products !== 'undefined') ? products : []);
+
+      // ফিল্টারিং লজিক
+      let filteredList = rawList.filter(item => {
+        const pGender = cleanStr(item.gender);
+        const pCategory = cleanStr(item.category);
+
+        const targetGender = cleanStr(selectedGender);
+        const targetCategory = cleanStr(selectedCategory);
+
+        // ১. gender এবং category উভয় ম্যাচ করলে
+        if (targetGender && targetCategory) {
+          return pGender === targetGender && pCategory === targetCategory;
+        }
+        // ২. শুধুমাত্র gender ম্যাচ করলে (All Men's / All Women's)
+        if (targetGender) {
+          return pGender === targetGender;
+        }
+        // ৩. শুধুমাত্র category ম্যাচ করলে
+        if (targetCategory) {
+          return pCategory === targetCategory;
+        }
+        // ৪. ফিল্টার সিলেক্ট করা না থাকলে সব দেখাবে
+        return true;
+      });
+
+      // স্ক্রিনে গ্রিড রেন্ডার
       if (filteredList.length === 0) {
-        productContainer.innerHTML = `<div class="no-products"><h3>No products found!</h3></div>`;
+        productContainer.innerHTML = `<div class="no-products" style="grid-column: 1/-1; text-align: center; padding: 50px 10px; color: #666;"><h3>No products found for this category!</h3></div>`;
       } else {
         productContainer.innerHTML = filteredList.map(item => `
           <div class="product-card" onclick="openModal('${item.id}')">
             <img src="${item.image}" alt="${item.name || item.title}" class="product-img" onerror="this.src='https://via.placeholder.com/300x350?text=No+Image'">
-            <div>
+            <div style="padding: 10px 0;">
+              <p style="font-size: 11px; color: #777; font-weight: bold; text-transform: uppercase;">${item.gender || ''} | ${item.category || ''}</p>
               <h3 class="product-name">${item.name || item.title}</h3>
               <p class="product-price">৳${item.price}</p>
             </div>
@@ -484,11 +517,21 @@
           </div>
         `).join('');
       }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      filterAndRenderProducts();
+      // ফায়ারবেস থেকে ডাটা ফেচ করতে দেড়ি হলে অটো পুনরায় ফিল্টার করবে
+      setTimeout(filterAndRenderProducts, 800);
+      setTimeout(filterAndRenderProducts, 2000);
     });
 
     function openModal(id) {
-      const allProductsList = typeof getAllProducts === 'function' ? getAllProducts() : (typeof products !== 'undefined' ? products : []);
-      currentProduct = allProductsList.find(p => String(p.id) === String(id));
+      let rawList = (typeof globalProductsCache !== 'undefined' && globalProductsCache.length > 0) 
+                    ? globalProductsCache 
+                    : ((typeof products !== 'undefined') ? products : []);
+      
+      currentProduct = rawList.find(p => String(p.id) === String(id));
       if (!currentProduct) return;
 
       const sizes = currentProduct.sizes || ["M", "L", "XL"];
@@ -503,14 +546,18 @@
       document.getElementById('m-desc').innerText = currentProduct.desc || 'Premium quality luxury streetwear designed for ultimate comfort and high-end aesthetics.';
 
       const sizeContainer = document.getElementById('m-sizes');
-      sizeContainer.innerHTML = sizes.map((s, idx) => `
-        <button class="size-btn ${idx === 0 ? 'active' : ''}" onclick="selectSize(this, '${s}')">${s}</button>
-      `).join('');
+      if (sizeContainer) {
+        sizeContainer.innerHTML = sizes.map((s, idx) => `
+          <button class="size-btn ${idx === 0 ? 'active' : ''}" onclick="selectSize(this, '${s}')">${s}</button>
+        `).join('');
+      }
 
       const colorContainer = document.getElementById('m-colors');
-      colorContainer.innerHTML = colors.map((c, idx) => `
-        <button class="size-btn ${idx === 0 ? 'active' : ''}" onclick="selectColor(this, '${c}')">${c}</button>
-      `).join('');
+      if (colorContainer) {
+        colorContainer.innerHTML = colors.map((c, idx) => `
+          <button class="size-btn ${idx === 0 ? 'active' : ''}" onclick="selectColor(this, '${c}')">${c}</button>
+        `).join('');
+      }
 
       document.getElementById('product-modal').style.display = 'flex';
     }
@@ -534,7 +581,7 @@
     function handleModalAddToCart() {
       if (!currentProduct) return;
       
-      let cart = getCart();
+      let cart = typeof getCart === 'function' ? getCart() : JSON.parse(localStorage.getItem('cart') || '[]');
       const existingItem = cart.find(item => String(item.id) === String(currentProduct.id) && item.size === selectedSize && item.color === selectedColor);
 
       if (existingItem) {
@@ -551,9 +598,11 @@
         });
       }
 
-      saveCart(cart);
+      if (typeof saveCart === 'function') saveCart(cart);
+      else localStorage.setItem('cart', JSON.stringify(cart));
+
       closeModal();
-      openCartDrawer();
+      if (typeof openCartDrawer === 'function') openCartDrawer();
     }
 
     function handleModalBuyNow() {

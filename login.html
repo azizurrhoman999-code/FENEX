@@ -104,12 +104,11 @@
       messagingSenderId: "506989870286",
       appId: "1:506989870286:web:75b50258542b88b443e49f"
     };
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
 
-    // ২. অনুমোদিত অ্যাডমিন জিমেইল
-    const ADMIN_EMAIL = "azizurrhoman999@gmail.com";
-
-    // ৩. Password Show/Hide Toggle Function
+    // ২. Password Show/Hide Toggle Function
     function togglePasswordVisibility(inputId, icon) {
       const passwordInput = document.getElementById(inputId);
       if (passwordInput.type === 'password') {
@@ -123,20 +122,25 @@
       }
     }
 
-    // ইউজার রোল অনুযায়ী রিডাইরেক্ট ফাংশন
+    // ৩. রিডাইরেক্ট (অ্যাডমিন এবং সাধারণ ইউজার সবাই সরাসরি index.html এ যাবে)
     function redirectUser(user) {
-      if (user && user.email === ADMIN_EMAIL) {
-        window.location.href = 'admin.html';
-      } else {
-        window.location.href = 'index.html';
-      }
+      if (!user) return;
+      window.location.href = 'index.html';
     }
 
-    // অলরেডি লগইন থাকলে রিডাইরেক্ট
+    // অলরেডি লগইন থাকলে বা মোবাইল রিডাইরেক্ট সম্পন্ন হলে পেজ রিডাইরেক্ট হবে
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         redirectUser(user);
       }
+    });
+
+    firebase.auth().getRedirectResult().then((result) => {
+      if (result.user) {
+        redirectUser(result.user);
+      }
+    }).catch((error) => {
+      console.error("Redirect Auth Error:", error);
     });
 
     // Tab Switcher
@@ -187,15 +191,17 @@
         });
     });
 
-    // Google Sign-In Logic
+    // Google Sign-In Logic (Mobile Friendly Popup Fallback to Redirect)
     function loginWithGoogle() {
       const provider = new firebase.auth.GoogleAuthProvider();
+      
       firebase.auth().signInWithPopup(provider)
         .then((result) => {
           redirectUser(result.user);
         })
         .catch((error) => {
-          alert("Google Sign-In Error: " + error.message);
+          console.warn("Popup blocked, switching to redirect mode:", error);
+          firebase.auth().signInWithRedirect(provider);
         });
     }
   </script>
