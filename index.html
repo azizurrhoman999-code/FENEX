@@ -34,7 +34,7 @@
       <i class="fa-solid fa-moon" id="themeToggleBtn"></i>
       <i class="fa-solid fa-magnifying-glass" id="searchBtn"></i>
       
-      <!-- ডাইনামিক ইউজার ও প্রোফাইল ড্রপডাউন (ডাবল আইকন ফিক্সড) -->
+      <!-- ডাইনামিক ইউজার ও প্রোফাইল ড্রপডাউন -->
       <div class="user-profile-wrapper" style="position: relative; display: inline-block;">
         <a class="icon-link" id="userIcon" style="cursor: pointer; font-size: 18px; text-decoration: none; color: inherit; display: inline-block;"></a>
 
@@ -44,7 +44,7 @@
           <div style="font-size: 12px; color: #aaa; margin-bottom: 10px; word-break: break-all;" id="modalUserEmail">user@gmail.com</div>
           <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
           
-          <!-- অ্যাডমিন প্যানেল বাটন (শুধু অ্যাডমিনের জন্য দৃশ্যমান হবে) -->
+          <!-- অ্যাডমিন প্যানেল বাটন -->
           <a href="admin.html" id="modalAdminBtn" style="display: none; width: 100%; text-align: center; background: #ff4757; color: white; border: none; padding: 8px 0; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: bold; margin-bottom: 8px;">
             <i class="fa-solid fa-user-shield"></i> Admin Panel
           </a>
@@ -64,7 +64,7 @@
     </div>
   </header>
 
-  <!-- Mobile Menu Drawer & Overlay (User Auth Section Added) -->
+  <!-- Mobile Menu Drawer & Overlay -->
   <div class="menu-overlay" id="menuOverlay"></div>
   <div class="mobile-menu" id="mobileMenu">
     <div class="menu-header">
@@ -78,16 +78,14 @@
       <li style="margin-top:15px;"><a href="#contact" style="text-decoration:none; color:var(--text-color); font-weight:bold;">CONTACT</a></li>
     </ul>
 
-    <!-- 📱 মোবাইল ইউজারদের জন্য ডাইনামিক সাইন-ইন / প্রোফাইল অপশন -->
+    <!-- 📱 মোবাইল ইউজার সাইন-ইন / প্রোফাইল অপশন -->
     <div class="mobile-auth-section" style="padding: 15px; border-top: 1px solid #333; margin-top: 15px;">
-      <!-- ইউজার লগইন না থাকলে এটি দেখাবে -->
       <div id="mobileLoggedOut" style="display: block;">
         <a href="login.html" class="auth-btn" style="display: block; text-align: center; padding: 10px; background: #000; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 700; font-size: 14px;">
           <i class="fa-solid fa-right-to-bracket" style="margin-right: 6px;"></i> Login / Sign Up
         </a>
       </div>
 
-      <!-- ইউজার লগইন থাকলে তার প্রোফাইল তথ্য ও লগআউট দেখাবে -->
       <div id="mobileLoggedIn" style="display: none;">
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
           <i class="fa-solid fa-circle-user" style="font-size: 26px; color: #2ec4b6;"></i>
@@ -213,9 +211,13 @@
     </div>
   </footer>
 
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <!-- Added Realtime Database SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  
   <script src="app.js?v=2.0"></script>
 </body>
 </html>

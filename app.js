@@ -1,9 +1,10 @@
-/* FENEX MASTER JAVASCRIPT (Firebase Integrated & Case-Insensitive Filter Fixed) */
+/* FENEX MASTER JAVASCRIPT (Firebase Firestore & Realtime Database Integrated) */
 
 // ১. Firebase Configuration & Initialization
 const firebaseConfig = {
   apiKey: "AIzaSyA4as297Sk35tTVqSQyOUztD5Vg9sV0Oy8",
   authDomain: "fenex-ba1af.firebaseapp.com",
+  databaseURL: "https://fenex-ba1af-default-rtdb.firebaseio.com", // Realtime Database URL
   projectId: "fenex-ba1af",
   storageBucket: "fenex-ba1af.firebasestorage.app",
   messagingSenderId: "506989870286",
@@ -16,6 +17,7 @@ if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.firestore();
+const rtdb = firebase.database(); // Realtime Database Instance
 const auth = firebase.auth();
 
 let globalProductsCache = [];
@@ -23,6 +25,38 @@ let currentUser = null;
 
 const CART_KEY = 'FENEX_CART';
 const COUPON_KEY = 'FENEX_APPLIED_COUPON';
+
+// 🔥 REALTIME DATABASE FUNCTIONS (Order Management)
+// অর্ডার ডাটাবেজে জমা করার ফাংশন
+function saveOrderToRealtimeDB(orderData, callback) {
+  const orderId = orderData.orderId || 'ORD-' + Date.now();
+  orderData.orderId = orderId;
+  orderData.createdAt = orderData.createdAt || new Date().toISOString();
+
+  rtdb.ref('orders/' + orderId).set(orderData)
+    .then(() => {
+      console.log("Order saved to Realtime Database successfully!");
+      if (callback) callback(true, orderId);
+    })
+    .catch((error) => {
+      console.error("Error saving order to Realtime DB:", error);
+      if (callback) callback(false, error);
+    });
+}
+
+// রিয়েল-টাইমে অর্ডার শো করার ফাংশন (Admin & Tracking Pages-এর জন্য)
+function listenRealtimeOrders(callback) {
+  rtdb.ref('orders').on('value', (snapshot) => {
+    const data = snapshot.val();
+    const ordersList = [];
+    if (data) {
+      Object.keys(data).forEach(key => {
+        ordersList.push({ id: key, ...data[key] });
+      });
+    }
+    if (callback) callback(ordersList);
+  });
+}
 
 // ২. কার্ট ফাংশনালিটি
 function getCart() {
@@ -158,7 +192,7 @@ function fetchFirebaseProducts(callback) {
   });
 }
 
-// 🛠️ ৪. নিখুঁত ক্যাটাগরি ও জেন্ডার ফিল্টারিং লজিক (FIXED)
+// ৪. ক্যাটাগরি ও জেন্ডার ফিল্টারিং লজিক
 function loadCategoryProducts() {
   const productContainer = document.getElementById("productGrid") 
                         || document.getElementById("featuredProductsGrid") 
@@ -176,19 +210,14 @@ function loadCategoryProducts() {
   fetchFirebaseProducts((allProducts) => {
     const urlParams = new URLSearchParams(window.location.search);
     
-    // URL থেকে ভ্যালু নেওয়ার সময় ছোট হাতের অক্ষরে এবং স্পেস/হাইফেন ক্লিন করে নেওয়া
     const selectedGender = (urlParams.get('gender') || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
     const selectedCategory = (urlParams.get('category') || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
     const filteredProducts = allProducts.filter(p => {
-      // ডাটাবেস থেকে প্রোডাক্টের gender ও category ফরম্যাট ঠিক করা
       const pGender = (p.gender || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
       const pCategory = (p.category || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
-      // জেন্ডার ম্যাচিং
       const matchGender = !selectedGender || selectedGender === 'all' || pGender === selectedGender || pGender.includes(selectedGender) || selectedGender.includes(pGender);
-      
-      // ক্যাটাগরি ম্যাচিং (যেমন: t-shirt, tshirt, shirt ফ্লেক্সিবল চেক)
       const matchCategory = !selectedCategory || selectedCategory === 'all' || pCategory === selectedCategory || pCategory.includes(selectedCategory) || selectedCategory.includes(pCategory);
 
       return matchGender && matchCategory;

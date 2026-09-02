@@ -56,6 +56,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -184,6 +185,7 @@
     const firebaseConfig = {
       apiKey: "AIzaSyA4as297Sk35tTVqSQyOUztD5Vg9sV0Oy8",
       authDomain: "fenex-ba1af.firebaseapp.com",
+      databaseURL: "https://fenex-ba1af-default-rtdb.firebaseio.com",
       projectId: "fenex-ba1af",
       storageBucket: "fenex-ba1af.firebasestorage.app",
       messagingSenderId: "506989870286",
@@ -194,8 +196,9 @@
       firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.firestore();
+    const rtdb = firebase.database();
 
-    // ২. অনুমোদিত অ্যাডমিন জিমেইল (এখানে আপনার সঠিক জিমেইলটি লিখুন)
+    // ২. অনুমোদিত অ্যাডমিন জিমেইল
     const ADMIN_EMAIL = "dreamboy50700@gmail.com"; 
 
     // ৩. সিকিউরিটি চেক
@@ -305,76 +308,101 @@
       }
     }
 
-    // ৭. রিয়েল-টাইম কাস্টমার অর্ডার প্রদর্শন
+    // ৭. রিয়েল-টাইম কাস্টমার অর্ডার প্রদর্শন (Firestore + RTDB Sync)
     function listenToOrders() {
+      // Firestore listener
       db.collection("orders").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-        const tableBody = document.getElementById("ordersTableBody");
-        if (snapshot.empty) {
-          tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #888;">কোনো অর্ডার নেই।</td></tr>`;
-          return;
-        }
-
-        tableBody.innerHTML = snapshot.docs.map(doc => {
-          const order = doc.data();
-          const docId = doc.id;
-
-          const itemsDetail = order.items ? order.items.map(i => {
-            const imgUrl = i.image || i.img || 'https://via.placeholder.com/45';
-            const size = i.size || 'M';
-            const color = i.color || 'Standard';
-            const qty = i.qty || i.quantity || 1;
-
-            return `
-              <div class="order-item-box">
-                <img src="${imgUrl}" alt="Product" class="order-item-img" onerror="this.src='https://via.placeholder.com/45'">
-                <div>
-                  <strong style="font-size: 0.8rem; display: block; color: inherit;">${i.name || i.title}</strong>
-                  <div style="margin-top: 2px;">
-                    <span class="size-badge">Size: ${size}</span>
-                    <span class="color-badge">Color: ${color}</span>
-                    <span style="font-weight: bold; font-size: 0.75rem; color: inherit; margin-left: 3px;">(x${qty})</span>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('') : 'N/A';
-
-          const custName = order.name || order.customerName || (order.customer && order.customer.name) || 'N/A';
-          const custPhone = order.phone || order.customerPhone || (order.customer && order.customer.phone) || '';
-          const custAddress = order.address || order.customerAddress || (order.customer && order.customer.address) || '';
-          const total = order.totalAmount || order.totalPrice || order.total || order.price || 0;
-
-          return `
-            <tr>
-              <td><strong>${order.orderId || docId.substring(0, 8)}</strong><br><small style="color:#777;">${order.date || ''}</small></td>
-              <td><strong>${custName}</strong><br>📞 ${custPhone}<br><small>📍 ${custAddress}</small></td>
-              <td style="min-width: 220px;">
-                ${itemsDetail}
-                <div style="margin-top: 5px;"><strong>Total: ৳${total}</strong></div>
-              </td>
-              <td>${order.paymentMethod || 'COD'}</td>
-              <td><span class="badge-trx">${order.trxId || 'N/A'}</span></td>
-              <td>
-                <select onchange="updateStatus('${docId}', this.value)" style="padding: 3px; font-size: 0.75rem;">
-                  <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                  <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
-                </select>
-              </td>
-              <td><i class="fa-solid fa-trash" onclick="deleteOrder('${docId}')" style="color:red; cursor:pointer;"></i></td>
-            </tr>
-          `;
-        }).join('');
+        renderOrdersTable(snapshot.docs.map(doc => ({ docId: doc.id, source: 'firestore', ...doc.data() })));
+      }, (err) => {
+        console.warn("Firestore order fetch failed, trying Realtime DB", err);
+        // Fallback to Realtime Database
+        rtdb.ref('orders').on('value', (snap) => {
+          const data = snap.val();
+          let ordersArr = [];
+          if (data) {
+            Object.keys(data).forEach(k => {
+              ordersArr.push({ docId: k, source: 'rtdb', ...data[k] });
+            });
+          }
+          renderOrdersTable(ordersArr);
+        });
       });
     }
 
-    // ৮. অর্ডারের স্ট্যাটাস আপডেট ও ডিলিট
+    function renderOrdersTable(orders) {
+      const tableBody = document.getElementById("ordersTableBody");
+      if (!orders || orders.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #888;">কোনো অর্ডার নেই।</td></tr>`;
+        return;
+      }
+
+      tableBody.innerHTML = orders.map(order => {
+        const docId = order.docId;
+
+        const itemsDetail = order.items ? order.items.map(i => {
+          const imgUrl = i.image || i.img || 'https://via.placeholder.com/45';
+          const size = i.size || 'M';
+          const color = i.color || 'Standard';
+          const qty = i.qty || i.quantity || 1;
+
+          return `
+            <div class="order-item-box">
+              <img src="${imgUrl}" alt="Product" class="order-item-img" onerror="this.src='https://via.placeholder.com/45'">
+              <div>
+                <strong style="font-size: 0.8rem; display: block; color: inherit;">${i.name || i.title || 'Product'}</strong>
+                <div style="margin-top: 2px;">
+                  <span class="size-badge">Size: ${size}</span>
+                  <span class="color-badge">Color: ${color}</span>
+                  <span style="font-weight: bold; font-size: 0.75rem; color: inherit; margin-left: 3px;">(x${qty})</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('') : 'N/A';
+
+        const custName = order.name || order.customerName || (order.customer && order.customer.name) || 'N/A';
+        const custPhone = order.phone || order.customerPhone || (order.customer && order.customer.phone) || '';
+        const custAddress = order.address || order.customerAddress || (order.customer && order.customer.address) || '';
+        const total = order.totalAmount || order.totalPrice || order.total || order.price || 0;
+        const displayId = order.orderId || docId.substring(0, 8);
+
+        return `
+          <tr>
+            <td><strong>${displayId}</strong><br><small style="color:#777;">${order.date || ''}</small></td>
+            <td><strong>${custName}</strong><br>📞 ${custPhone}<br><small>📍 ${custAddress}</small></td>
+            <td style="min-width: 220px;">
+              ${itemsDetail}
+              <div style="margin-top: 5px;"><strong>Total: ৳${total}</strong></div>
+            </td>
+            <td>${order.paymentMethod || 'COD'}</td>
+            <td><span class="badge-trx">${order.trxId || 'N/A'}</span></td>
+            <td>
+              <select onchange="updateStatus('${docId}', this.value)" style="padding: 3px; font-size: 0.75rem;">
+                <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+              </select>
+            </td>
+            <td><i class="fa-solid fa-trash" onclick="deleteOrder('${docId}')" style="color:red; cursor:pointer;"></i></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ৮. অর্ডারের স্ট্যাটাস আপডেট ও ডিলিট (Firestore + RTDB Synchronized)
     function updateStatus(docId, newStatus) {
-      db.collection("orders").doc(docId).update({ status: newStatus });
+      // Update Firestore
+      db.collection("orders").doc(docId).update({ status: newStatus }).catch(err => console.log(err));
+      // Update Realtime Database
+      rtdb.ref('orders/' + docId).update({ status: newStatus }).catch(err => console.log(err));
     }
 
     function deleteOrder(docId) {
       if (confirm("অর্ডারটি মুছে ফেলতে চান?")) {
-        db.collection("orders").doc(docId).delete();
+        // Delete from Firestore
+        db.collection("orders").doc(docId).delete().catch(err => console.log(err));
+        // Delete from Realtime Database
+        rtdb.ref('orders/' + docId).remove().catch(err => console.log(err));
       }
     }
 

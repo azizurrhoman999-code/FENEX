@@ -59,6 +59,7 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -184,6 +185,7 @@
     const firebaseConfig = {
       apiKey: "AIzaSyA4as297Sk35tTVqSQyOUztD5Vg9sV0Oy8",
       authDomain: "fenex-ba1af.firebaseapp.com",
+      databaseURL: "https://fenex-ba1af-default-rtdb.firebaseio.com",
       projectId: "fenex-ba1af",
       storageBucket: "fenex-ba1af.firebasestorage.app",
       messagingSenderId: "506989870286",
@@ -194,6 +196,7 @@
       firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.firestore();
+    const rtdb = firebase.database();
 
     let currentSubtotal = 0;
     let appliedDiscount = 0;
@@ -274,7 +277,7 @@
       if (code === 'FENEX10') {
         appliedDiscount = currentSubtotal * 0.10;
         msgEl.style.color = '#2e7d32';
-        msgEl.innerText = '🎉 অভিনন্দন! FENEX10 কুপন যুক্ত হয়েছে।';
+        msgEl.innerText = '🎉 অভিনন্দন! FENEX10 কুপন যুক্ত হয়েছে।';
         document.getElementById('discountRow').style.display = 'flex';
       } else {
         appliedDiscount = 0;
@@ -364,12 +367,18 @@
         paymentMethod: paymentDetailsStr,
         trxId: trxId,
         status: "Pending",
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        createdAt: new Date().toISOString()
       };
 
       try {
-        // Save order to Firebase Firestore
-        await db.collection("orders").add(newOrder);
+        // Save order to Firebase Firestore & Realtime Database concurrently
+        await Promise.all([
+          db.collection("orders").add({
+            ...newOrder,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          }),
+          rtdb.ref('orders/' + generatedOrderId).set(newOrder)
+        ]);
 
         // Clear Cart
         localStorage.removeItem('FENEX_CART');
@@ -380,7 +389,7 @@
 
       } catch (error) {
         console.error("Error saving order: ", error);
-        alert("অর্ডার সেভ করতে সমস্যা হয়েছে! " + error.message);
+        alert("অর্ডার সেভ করতে সমস্যা হয়েছে! " + error.message);
         btn.innerText = "ORDER CONFIRM করুন";
         btn.disabled = false;
       }
